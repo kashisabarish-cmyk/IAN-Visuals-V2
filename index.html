@@ -121,9 +121,7 @@
       box-shadow:inset 0 0 50px rgba(0,0,0,.55),0 0 25px color-mix(in srgb,var(--accent) 5%,transparent)!important;
     }
     html:not(.dark) .terminal { background:linear-gradient(145deg,#f7faff,#e9f0f8)!important; box-shadow:inset 0 0 30px rgba(15,23,42,.06)!important; }
-    #consoleCard { min-height:545px!important; }
-    #consoleCard form { margin-top:3px; }
-    #terminalInput { height:48px!important; border-color:color-mix(in srgb,var(--accent) 20%,rgba(255,255,255,.1))!important; background:color-mix(in srgb,var(--bg) 72%,transparent)!important; }
+        #terminalInput { height:48px!important; border-color:color-mix(in srgb,var(--accent) 20%,rgba(255,255,255,.1))!important; background:color-mix(in srgb,var(--bg) 72%,transparent)!important; }
     #terminalInput:focus { box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 10%,transparent),0 0 25px color-mix(in srgb,var(--accent) 10%,transparent); }
     #consoleMicBtn, #micBtn, #voiceBtn, #defenseBtn, header .btn:not(#defenseBtn) { background:color-mix(in srgb,var(--accent) 5%,transparent)!important; border-color:color-mix(in srgb,var(--accent) 18%,transparent)!important; }
     #consoleMicBtn:hover, #micBtn:hover, #voiceBtn:hover, header .btn:hover { background:color-mix(in srgb,var(--accent) 15%,transparent)!important; border-color:var(--accent)!important; }
@@ -133,7 +131,7 @@
     @keyframes orbitPulse { 50%{transform:scale(1.08);opacity:.45} }
     #mapCard, #neuralMapCard { min-height:400px!important; }
     #mapCard > div:first-child, #neuralMapCard > div:first-child { padding-bottom:10px; border-bottom:1px solid color-mix(in srgb,var(--accent) 10%,transparent); }
-    #mapCard h2, #neuralMapCard h2, #consoleCard h2 { letter-spacing:.02em; font-size:15px; }
+    #mapCard h2, #neuralMapCard h2, #ianCoreCard h2 { letter-spacing:.02em; font-size:15px; }
     #mapCard button, #neuralMapCard button { transition:.2s; }
     .node { box-shadow:0 8px 25px rgba(0,0,0,.25); backdrop-filter:blur(8px); }
     .node:hover { box-shadow:0 0 28px color-mix(in srgb,var(--accent) 25%,transparent); }
@@ -162,7 +160,14 @@
     .map-fullscreen .viewport::after { inset:18px; border-width:2px; }
     #colorMenu { box-shadow:0 25px 70px rgba(0,0,0,.4); }
     .swatch { width:30px;height:30px;box-shadow:0 0 12px currentColor; }
-    @media(max-width:1279px){ #ianTalkingOrb{width:125px!important;height:125px!important;} #consoleCard{min-height:500px!important;} }
+
+    #ianCoreCard{position:relative;display:flex;align-items:center;justify-content:center;}
+    #ianTalkingOrb{margin-inline:auto;transform:translate3d(0,0,0);transition:transform .55s cubic-bezier(.22,1,.36,1),box-shadow .3s ease;}
+    #historyOverlay{align-items:center;}
+    #historyOverlay .history-panel{opacity:0;transform:translate3d(0,70px,0) scale(.985);transition:opacity .45s ease,transform .55s cubic-bezier(.22,1,.36,1);will-change:transform,opacity;}
+    #historyOverlay.history-open .history-panel{opacity:1;transform:translate3d(0,-7vh,0) scale(1);}
+    @media(max-width:640px){#historyOverlay.history-open .history-panel{transform:translate3d(0,-3vh,0) scale(1);}}
+    @media(max-width:1279px){ #ianTalkingOrb{width:125px!important;height:125px!important;}  }
 
 /* ================= JARVIS-INSPIRED DEFAULT SKIN ================= */
 :root{
@@ -209,7 +214,7 @@ article.glass:hover{transform:none!important;border-color:rgba(56,232,255,.38)!i
 .viewport::before{content:"";position:absolute;inset:0;border:1px solid rgba(56,232,255,.06);box-shadow:inset 0 0 70px rgba(0,180,255,.08);pointer-events:none}
 #mapViewport .viewport-inner{filter:drop-shadow(0 0 8px rgba(56,232,255,.18))}
 #neuralViewport{background:radial-gradient(circle at center,rgba(32,64,151,.17),transparent 52%),#030711!important}
-#consoleCard{background:linear-gradient(180deg,rgba(3,18,31,.9),rgba(1,8,15,.88))!important}
+#ianCoreCard{background:linear-gradient(180deg,rgba(3,18,31,.9),rgba(1,8,15,.88))!important}
 #terminalOutput{
   background:linear-gradient(180deg,rgba(0,7,13,.86),rgba(1,11,19,.72))!important;
   border:1px solid rgba(56,232,255,.12)!important;
@@ -239,7 +244,7 @@ article.glass:hover{transform:none!important;border-color:rgba(56,232,255,.38)!i
 @keyframes jarvisSpin{to{transform:rotate(342deg)}}
 @keyframes jarvisSpinReverse{to{transform:rotate(-360deg)}}
 #ianStateText{text-shadow:0 0 15px rgba(56,232,255,.55)}
-#mapCard h2,#neuralMapCard h2,#consoleCard h2{font-size:12px!important;letter-spacing:.12em;text-transform:uppercase}
+#mapCard h2,#neuralMapCard h2,#ianCoreCard h2{font-size:12px!important;letter-spacing:.12em;text-transform:uppercase}
 .mono{letter-spacing:.04em}
 #mapCard .mono:first-child,#neuralMapCard .mono:first-child{color:#62edff!important}
 #colorMenu{background:rgba(2,14,24,.96)!important;border:1px solid rgba(56,232,255,.28)!important}
@@ -349,7 +354,7 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
 
     <!-- CENTER -->
     <section class="xl:col-span-6 flex flex-col gap-4 min-w-0">
-      <article class="glass glow rounded-2xl p-5 flex flex-col items-center justify-center min-h-[260px]">
+      <article id="ianCoreCard" class="glass glow rounded-2xl p-5 flex flex-col items-center justify-center min-h-[260px] w-full">
         <div class="relative">
           <div class="absolute -inset-10 rounded-full border border-cyan-400/10 animate-pulse"></div>
           <div class="absolute -inset-16 rounded-full border border-purple-400/10"></div>
@@ -580,7 +585,7 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       $('micStatus').textContent='MIC: UNSUPPORTED'; $('inputStatus').textContent='UNSUPPORTED';
-      $('micBtn').disabled=true; $('consoleMicBtn').disabled=true; return;
+      $('micBtn').disabled=true;  return;
     }
     recognition = new SpeechRecognition();
     recognition.continuous = false; recognition.interimResults = true; recognition.lang = 'en-US';
@@ -595,7 +600,6 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
         if(event.results[i].isFinal) finalText += t;
       }
       const interim = event.results[event.results.length-1]?.[0]?.transcript || '';
-      $('terminalInput').value = finalText || interim;
       if (finalText.trim()) handleCommand(finalText.trim(), true);
     };
     recognition.onerror = e => {
@@ -646,9 +650,9 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
 
   function setListening(value) {
     isListening=value;
-    $('micBtn').classList.toggle('mic-listening', value); $('consoleMicBtn').classList.toggle('mic-listening', value);
-    $('micIcon').className=value ? 'fa-solid fa-wave-square text-xs' : 'fa-solid fa-microphone text-xs';
-    $('micStatus').textContent=value ? 'MIC: LISTENING' : 'MIC: OFF'; $('inputStatus').textContent=value ? 'LISTENING' : 'OFF';
+    $('micBtn')?.classList.toggle('mic-listening', value);
+    if ($('micIcon')) $('micIcon').className=value ? 'fa-solid fa-wave-square text-xs' : 'fa-solid fa-microphone text-xs';
+    $('micStatus').textContent=value ? 'MIC: LISTENING' : 'MIC: OFF'; if ($('inputStatus')) $('inputStatus').textContent=value ? 'LISTENING' : 'OFF';
   }
 
   // ---------- CONVERSATION HISTORY ----------
@@ -686,12 +690,12 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
   function showConversationHistory(){
     renderConversationHistory();
     const overlay=$('historyOverlay');
-    overlay.classList.remove('hidden'); overlay.classList.add('flex');
+    overlay.classList.remove('hidden'); overlay.classList.add('flex'); requestAnimationFrame(()=>overlay.classList.add('history-open'));
   }
 
   function hideConversationHistory(){
     const overlay=$('historyOverlay');
-    overlay.classList.add('hidden'); overlay.classList.remove('flex');
+    overlay.classList.remove('history-open'); setTimeout(()=>{ overlay.classList.add('hidden'); overlay.classList.remove('flex'); }, 420);
   }
 
   // ---------- COMMAND ENGINE ----------
@@ -722,7 +726,7 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
 
   async function processLocalCommand(raw) {
     const q=raw.trim().toLowerCase();
-    if(q==='clear' || q==='cls') { $('terminalOutput').innerHTML=''; return {handled:true}; }
+    if(q==='clear' || q==='cls') { return {handled:true,response:'I cleared the visible command activity. Conversation history remains preserved.'}; }
     if(q==='help' || q==='commands' || q==='help me') {
       return {handled:true,response:'Available commands: help, status, diagnostics, weather, joke, hello, who are you, ping, expand map, normal map, expand neural, normal neural, show history, conversation history, hide history, emotion, mood, set emotion <emotion>, and emotion trigger words like yay, ugh, sigh, hmm, focus, uh oh, and wow, learn, remember, recall, voice on, voice off, mic, clear.'};
     }
@@ -764,7 +768,7 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
       'hmm':'curious', 'interesting':'curious', 'why':'curious',
       'focus':'focused', 'lock in':'focused', 'locked in':'focused',
       'uh oh':'concerned', 'warning':'concerned', 'careful':'concerned',
-      'wow':'excited', 'lets go':'excited', 'let's go':'excited'
+      'wow':'excited', 'lets go':'excited', "let's go":'excited'
     };
     const exactEmotionTriggers = emotionTriggers[q];
     if(exactEmotionTriggers){
@@ -795,10 +799,6 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
   }
 
   function appendTerminalLog(text,type='system') {
-    const el=document.createElement('div');
-    el.textContent=text;
-    el.className=type==='ian'?'text-cyan-300':type==='user'?'text-white':type==='error'?'text-red-300':'text-cyan-300';
-    if($('terminalOutput')) { $('terminalOutput').appendChild(el); $('terminalOutput').scrollTop=$('terminalOutput').scrollHeight; }
     if(type==='user') recordConversation('user', text.replace(/^>\s*/,''));
     if(type==='ian') recordConversation('ian', text.replace(/^\[ME\]\s*/,''));
   }
@@ -888,7 +888,7 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
 
   <!-- Conversation history: hidden until requested by command -->
   <div id="historyOverlay" class="fixed inset-0 z-[200] hidden items-center justify-center p-5 bg-black/70 backdrop-blur-md">
-    <div class="glass w-full max-w-3xl max-h-[82vh] rounded-2xl border border-white/10 p-5 flex flex-col">
+    <div class="history-panel glass w-full max-w-3xl max-h-[82vh] rounded-2xl border border-white/10 p-5 flex flex-col">
       <div class="flex items-center justify-between mb-4">
         <div><p class="mono text-[9px] tracking-[.2em] text-cyan-400">MEMORY // CONVERSATION</p><h2 class="font-semibold text-sm">Conversation History</h2></div>
         <button onclick="hideConversationHistory()" class="btn px-3 py-2 rounded-lg mono text-[9px]">CLOSE</button>
