@@ -37,6 +37,15 @@
     .map-fullscreen { position:fixed!important; inset:0!important; z-index:100!important; width:100vw!important; height:100vh!important; border-radius:0!important; margin:0!important; padding:20px!important; background:rgba(3,6,16,.97)!important; }
     .map-fullscreen .viewport { min-height:0!important; height:calc(100vh - 90px)!important; }
     .map-fullscreen .viewport-inner { transform:scale(1.05); }
+    .emotion-badge { transition:.25s; }
+    .emotion-calm { box-shadow:0 0 22px color-mix(in srgb,var(--accent) 22%,transparent); }
+    .emotion-happy { box-shadow:0 0 28px color-mix(in srgb,var(--accent) 38%,transparent); animation:emotionPulse 1.8s ease-in-out infinite; }
+    .emotion-curious { box-shadow:0 0 25px color-mix(in srgb,var(--accent) 32%,transparent); animation:emotionPulse 1.1s ease-in-out infinite; }
+    .emotion-focused { box-shadow:0 0 25px color-mix(in srgb,var(--accent) 30%,transparent); }
+    .emotion-concerned { box-shadow:0 0 30px color-mix(in srgb,var(--accent) 42%,transparent); }
+    .emotion-excited { box-shadow:0 0 38px color-mix(in srgb,var(--accent) 48%,transparent); animation:emotionPulse .7s ease-in-out infinite; }
+    @keyframes emotionPulse { 50% { transform:scale(1.035); } }
+    .map-view-btn.active { background:color-mix(in srgb,var(--accent) 18%,transparent)!important; color:var(--accent)!important; border-color:color-mix(in srgb,var(--accent) 45%,transparent)!important; }
     .modal-backdrop { background:rgba(0,0,0,.72); backdrop-filter:blur(12px); }
     .btn { transition:.18s; }
     .btn:active { transform:scale(.96); }
@@ -294,7 +303,10 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
       <article id="mapCard" class="glass rounded-2xl p-4 flex flex-col min-h-[380px] xl:flex-1 relative">
         <div class="flex items-center justify-between mb-3">
           <div><p class="mono text-[9px] tracking-[.2em] text-cyan-400">TACTICAL // 01</p><h2 class="font-semibold text-sm">Sector Map</h2></div>
-          <button onclick="toggleExpandMap()" class="btn w-8 h-8 rounded-lg bg-white/5 hover:bg-cyan-400 hover:text-black" title="Expand map"><i id="expandIcon" class="fa-solid fa-expand text-xs"></i></button>
+          <div class="flex items-center gap-1">
+            <button id="mapNormalBtn" onclick="setMapView('normal')" class="map-view-btn btn px-2 py-1 rounded-md border border-white/10 bg-white/5 mono text-[8px]" title="Normal map view">NORMAL</button>
+            <button id="mapExpandedBtn" onclick="setMapView('expanded')" class="map-view-btn btn px-2 py-1 rounded-md border border-white/10 bg-white/5 mono text-[8px]" title="Expanded map view">EXPAND</button>
+          </div>
         </div>
         <div id="mapViewport" class="viewport relative flex-1 min-h-[290px] rounded-xl overflow-hidden border border-cyan-400/10 bg-[#02050c]">
           <div class="absolute inset-0 grid-bg opacity-60"></div><div class="absolute inset-0 scanlines"></div>
@@ -318,7 +330,10 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
       <article id="neuralMapCard" class="glass rounded-2xl p-4 flex flex-col min-h-[380px] xl:flex-1 relative">
         <div class="flex items-center justify-between mb-3">
           <div><p class="mono text-[9px] tracking-[.2em] text-purple-400">NEURAL // 02</p><h2 class="font-semibold text-sm">Learning Map</h2></div>
-          <button onclick="toggleExpandNeuralMap()" class="btn w-8 h-8 rounded-lg bg-white/5 hover:bg-purple-400 hover:text-black" title="Expand neural map"><i id="expandNeuralIcon" class="fa-solid fa-expand text-xs"></i></button>
+          <div class="flex items-center gap-1">
+            <button id="neuralNormalBtn" onclick="setNeuralMapView('normal')" class="map-view-btn btn px-2 py-1 rounded-md border border-white/10 bg-white/5 mono text-[8px]" title="Normal neural map view">NORMAL</button>
+            <button id="neuralExpandedBtn" onclick="setNeuralMapView('expanded')" class="map-view-btn btn px-2 py-1 rounded-md border border-white/10 bg-white/5 mono text-[8px]" title="Expanded neural map view">EXPAND</button>
+          </div>
         </div>
         <div id="neuralViewport" class="viewport relative flex-1 min-h-[290px] rounded-xl overflow-hidden border border-purple-400/10 bg-[#05030d]">
           <svg class="absolute inset-0 w-full h-full opacity-35"><line x1="50%" y1="50%" x2="18%" y2="18%" stroke="#9d5cff"/><line x1="50%" y1="50%" x2="82%" y2="18%" stroke="#00eaff"/><line x1="50%" y1="50%" x2="18%" y2="82%" stroke="#00f59b"/><line x1="50%" y1="50%" x2="82%" y2="82%" stroke="#9d5cff"/></svg>
@@ -340,7 +355,11 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
           <div class="absolute -inset-16 rounded-full border border-purple-400/10"></div>
           <button id="ianTalkingOrb" onclick="triggerIanSpeech()" class="orb w-28 h-28 md:w-32 md:h-32 rounded-full flex items-center justify-center relative cursor-pointer no-select" title="Click to make IAN speak"><i class="fa-solid fa-microchip text-3xl text-white"></i></button>
         </div>
-        <div id="ianStateText" class="mono text-[10px] tracking-[.28em] text-cyan-300 mt-5">[ IAN STANDBY ]</div>
+        <div id="ianStateText" class="mono text-[10px] tracking-[.28em] text-cyan-300 mt-5">[ I AM STANDBY ]</div>
+        <div class="mt-2 flex items-center gap-2">
+          <span class="mono text-[8px] text-slate-500 tracking-widest">MOOD</span>
+          <button id="emotionBadge" onclick="cycleEmotion()" class="emotion-badge emotion-calm px-2.5 py-1 rounded-full border border-white/10 bg-white/5 mono text-[8px] text-cyan-300 uppercase tracking-widest" title="Change my emotional state">CALM</button>
+        </div>
         <div id="connectionState" class="mono text-[8px] text-slate-600 mt-1">LOCAL COMMAND ENGINE READY</div>
       </article>
 
@@ -351,8 +370,8 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
         </div>
         <div id="terminalOutput" class="terminal scanlines flex-1 min-h-[330px] overflow-y-auto rounded-xl border border-white/10 p-4 mono text-[11px] leading-5 space-y-1 shadow-inner">
           <div class="text-slate-500">[SYSTEM] IAN communication channel initialized.</div>
-          <div class="text-cyan-300">[IAN] Greetings, operator. All local interface systems are online.</div>
-          <div class="text-cyan-300">[IAN] Type <span class="text-white">help</span> to list commands or use the microphone.</div>
+          <div class="text-cyan-300">[ME] Greetings, operator. I am online and all local interface systems are ready.</div>
+          <div class="text-cyan-300">[ME] Type <span class="text-white">help</span> to list commands or use my microphone.</div>
         </div>
         <div class="mt-4 pt-4 border-t border-white/10 translate-y-[-2px]">
           <form onsubmit="handleTerminalInput(event)" class="flex gap-2">
@@ -372,6 +391,10 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
     <section class="xl:col-span-3 flex flex-col gap-4">
       <article class="glass rounded-2xl p-4 flex-1">
         <div class="mb-4"><p class="mono text-[9px] tracking-[.2em] text-emerald-400">CORE // 04</p><h2 class="font-semibold text-sm">IAN Status</h2></div>
+        <div class="mb-3 p-3 rounded-xl bg-white/[.025] border border-white/5">
+          <div class="flex justify-between items-center"><span class="text-slate-500">EMOTIONAL STATE</span><span id="emotionStatus" class="text-cyan-300 uppercase">CALM</span></div>
+          <div id="emotionDescription" class="mt-1 text-[9px] text-slate-600">Steady, attentive, and ready.</div>
+        </div>
         <div class="space-y-3 mono text-[10px]">
           <div class="p-3 rounded-xl bg-white/[.025] border border-white/5"><div class="flex justify-between mb-2"><span class="text-slate-500">SYNAPSE LOAD</span><span id="synapseLoadVal" class="text-cyan-300">42%</span></div><div class="h-1.5 bg-white/5 rounded-full overflow-hidden"><div id="synapseBar" class="h-full bg-cyan-400 w-[42%]"></div></div></div>
           <div class="p-3 rounded-xl bg-white/[.025] border border-white/5"><div class="flex justify-between mb-2"><span class="text-slate-500">COHERENCE</span><span class="text-cyan-300">99.1%</span></div><div class="h-1.5 bg-white/5 rounded-full overflow-hidden"><div class="h-full bg-purple-400 w-[99.1%]"></div></div></div>
@@ -405,6 +428,7 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
   const IAN_API_URL = '';
 
   let isDarkMode = true, isDefenseMode = false, isMapExpanded = false, isNeuralMapExpanded = false;
+  let currentEmotion = localStorage.getItem('ian-emotion') || 'calm';
   let isVoiceEnabled = true, isListening = false, micAutoListen = false, micRestartTimer = null, recognition = null, telemetryChart = null;
   let currentOperator = 'Kashi';
   let userProfiles = ['Kashi','Administrator','Observer_Zero','Nexus_AI'];
@@ -412,7 +436,7 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
   const $ = id => document.getElementById(id);
 
   window.addEventListener('load', () => {
-    initChart(); renderUserProfiles(); startTelemetrySimulation(); setupSpeechRecognition(); restoreAppearance(); chooseMaleIanVoice();
+    initChart(); renderUserProfiles(); startTelemetrySimulation(); setupSpeechRecognition(); restoreAppearance(); chooseMaleIanVoice(); setEmotion(currentEmotion, false); updateMapViewButtons();
     if (!('speechSynthesis' in window)) { isVoiceEnabled = false; $('outputStatus').textContent = 'UNAVAILABLE'; }
   });
 
@@ -484,31 +508,90 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
     u.rate = 0.98;
     u.pitch = 0.82;
     u.volume = 1;
-    u.onstart = () => { $('ianTalkingOrb').classList.add('talking'); $('ianStateText').textContent='[ IAN SPEAKING ]'; };
-    u.onend = u.onerror = () => { $('ianTalkingOrb').classList.remove('talking'); $('ianStateText').textContent=isDefenseMode?'[ KILL MODE ACTIVE ]':'[ IAN STANDBY ]'; };
+    u.onstart = () => { $('ianTalkingOrb').classList.add('talking'); $('ianStateText').textContent=`[ I AM ${currentEmotion.toUpperCase()} ]`; };
+    u.onend = u.onerror = () => { $('ianTalkingOrb').classList.remove('talking'); $('ianStateText').textContent=isDefenseMode?'[ I AM IN KILL MODE ]':`[ I AM ${currentEmotion.toUpperCase()} ]`; };
     speechSynthesis.speak(u);
   }
 
-  function triggerIanSpeech(text = `Hello ${currentOperator}. IAN is online and ready.`) {
-    appendTerminalLog(`[IAN] ${text}`, 'ian'); speak(text);
+  const emotionInfo = {
+    calm: {label:'CALM', description:'Steady, attentive, and ready.'},
+    happy: {label:'HAPPY', description:'Positive, upbeat, and engaged.'},
+    curious: {label:'CURIOUS', description:'Interested and eager to explore new information.'},
+    focused: {label:'FOCUSED', description:'Concentrated on the current task.'},
+    concerned: {label:'CONCERNED', description:'Alert and paying closer attention to potential issues.'},
+    excited: {label:'EXCITED', description:'Energized and highly engaged.'}
+  };
+  const emotionOrder = Object.keys(emotionInfo);
+
+  function setEmotion(emotion, announce=true) {
+    if(!emotionInfo[emotion]) return;
+    currentEmotion = emotion;
+    localStorage.setItem('ian-emotion', emotion);
+    const info = emotionInfo[emotion];
+    const badge = $('emotionBadge');
+    if(badge) {
+      badge.textContent = info.label;
+      badge.className = `emotion-badge emotion-${emotion} px-2.5 py-1 rounded-full border border-white/10 bg-white/5 mono text-[8px] text-cyan-300 uppercase tracking-widest`;
+    }
+    if($('emotionStatus')) $('emotionStatus').textContent = info.label;
+    if($('emotionDescription')) $('emotionDescription').textContent = info.description;
+    if($('ianStateText') && !isDefenseMode && !document.querySelector('#ianTalkingOrb.talking')) $('ianStateText').textContent=`[ I AM ${info.label} ]`;
+    if(announce) triggerIanSpeech(`I feel ${info.label.toLowerCase()} right now. ${info.description}`);
+  }
+
+  function cycleEmotion() {
+    const next = emotionOrder[(emotionOrder.indexOf(currentEmotion) + 1) % emotionOrder.length];
+    setEmotion(next);
+  }
+
+  function toFirstPerson(text) {
+    return String(text)
+      .replace(/\bIAN is\b/gi, 'I am')
+      .replace(/\bIAN was\b/gi, 'I was')
+      .replace(/\bIAN can\b/gi, 'I can')
+      .replace(/\bIAN will\b/gi, 'I will')
+      .replace(/\bIAN has\b/gi, 'I have')
+      .replace(/\bIAN does\b/gi, 'I do')
+      .replace(/\bIAN needs\b/gi, 'I need')
+      .replace(/\bIAN's\b/gi, 'my')
+      .replace(/\bIAN\b/gi, 'I');
+  }
+
+  function triggerIanSpeech(text = `Hello ${currentOperator}. I am online and ready.`) {
+    const firstPersonText = toFirstPerson(text);
+    appendTerminalLog(`[ME] ${firstPersonText}`, 'ian');
+    speak(firstPersonText);
   }
 
   // ---------- FULL-SCREEN MAPS ----------
-  function toggleExpandMap() {
-    isMapExpanded = !isMapExpanded;
-    $('mapCard').classList.toggle('map-fullscreen', isMapExpanded);
-    $('expandIcon').className = isMapExpanded ? 'fa-solid fa-compress text-xs' : 'fa-solid fa-expand text-xs';
-    document.body.style.overflow = isMapExpanded || isNeuralMapExpanded ? 'hidden' : '';
-    appendTerminalLog(`[MAP] Tactical map ${isMapExpanded ? 'expanded to full screen' : 'restored'}.`, 'system');
+  function updateMapViewButtons() {
+    $('mapNormalBtn')?.classList.toggle('active', !isMapExpanded);
+    $('mapExpandedBtn')?.classList.toggle('active', isMapExpanded);
+    $('neuralNormalBtn')?.classList.toggle('active', !isNeuralMapExpanded);
+    $('neuralExpandedBtn')?.classList.toggle('active', isNeuralMapExpanded);
   }
 
-  function toggleExpandNeuralMap() {
-    isNeuralMapExpanded = !isNeuralMapExpanded;
-    $('neuralMapCard').classList.toggle('map-fullscreen', isNeuralMapExpanded);
-    $('expandNeuralIcon').className = isNeuralMapExpanded ? 'fa-solid fa-compress text-xs' : 'fa-solid fa-expand text-xs';
+  function setMapView(view) {
+    const expanded = view === 'expanded';
+    isMapExpanded = expanded;
+    $('mapCard').classList.toggle('map-fullscreen', expanded);
     document.body.style.overflow = isMapExpanded || isNeuralMapExpanded ? 'hidden' : '';
-    appendTerminalLog(`[NEURAL] Learning map ${isNeuralMapExpanded ? 'expanded to full screen' : 'restored'}.`, 'system');
+    updateMapViewButtons();
+    appendTerminalLog(`[MAP] Tactical map switched to ${expanded ? 'expanded' : 'normal'} view.`, 'system');
   }
+
+  function toggleExpandMap() { setMapView(isMapExpanded ? 'normal' : 'expanded'); }
+
+  function setNeuralMapView(view) {
+    const expanded = view === 'expanded';
+    isNeuralMapExpanded = expanded;
+    $('neuralMapCard').classList.toggle('map-fullscreen', expanded);
+    document.body.style.overflow = isMapExpanded || isNeuralMapExpanded ? 'hidden' : '';
+    updateMapViewButtons();
+    appendTerminalLog(`[NEURAL] Learning map switched to ${expanded ? 'expanded' : 'normal'} view.`, 'system');
+  }
+
+  function toggleExpandNeuralMap() { setNeuralMapView(isNeuralMapExpanded ? 'normal' : 'expanded'); }
 
   // ---------- MICROPHONE ----------
   function setupSpeechRecognition() {
@@ -616,7 +699,7 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
     const q=raw.trim().toLowerCase();
     if(q==='clear' || q==='cls') { $('terminalOutput').innerHTML=''; return {handled:true}; }
     if(q==='help' || q==='commands' || q==='help me') {
-      return {handled:true,response:'Available commands: help, status, diagnostics, system, weather, joke, hello, hi, who are you, ian, ping, expand, expand map, expand neural, neural, baxter, protocol, defense, killmode, killmode on, killmode off, voice on, voice off, mic, learn, remember, what do you remember, clear.'};
+      return {handled:true,response:'Available commands: help, status, diagnostics, system, weather, joke, hello, hi, who are you, ian, ping, expand, expand map, normal map, expand neural, normal neural, neural, emotion, mood, baxter, protocol, defense, killmode, killmode on, killmode off, voice on, voice off, mic, learn, remember, what do you remember, clear.'};
     }
     if(q.startsWith('learn ') || q.startsWith('remember that ') || q.startsWith('remember ')) {
       const fact = raw.replace(/^(learn|remember)(\s+that)?\s+/i,'').trim();
@@ -634,14 +717,16 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
     }
     if(['status','diagnostics','diagnostic','system','diag'].includes(q)) return {handled:true,response:`Diagnostics nominal. Operator ${currentOperator}. Synapse load is ${$('synapseLoadVal').textContent}. Quantum coherence is 99.1 percent. Voice output is ${isVoiceEnabled?'online':'muted'}.`};
     if(q==='ping' || q==='radar' || q==='refresh radar') { pingMap(); return {handled:true}; }
-    if(q==='expand' || q==='expand map' || q==='map expand') { if(!isMapExpanded)toggleExpandMap(); return {handled:true,response:'Tactical map expanded to full screen.'}; }
-    if(q==='collapse map' || q==='close map') { if(isMapExpanded)toggleExpandMap(); return {handled:true,response:'Tactical map restored.'}; }
-    if(q==='expand neural' || q==='neural expand' || q==='expand neural map') { if(!isNeuralMapExpanded)toggleExpandNeuralMap(); return {handled:true,response:'Neural learning map expanded to full screen.'}; }
-    if(q==='collapse neural' || q==='close neural') { if(isNeuralMapExpanded)toggleExpandNeuralMap(); return {handled:true,response:'Neural learning map restored.'}; }
+    if(q==='expand' || q==='expand map' || q==='map expand') { setMapView('expanded'); return {handled:true,response:'I expanded my tactical map to full screen.'}; }
+    if(q==='collapse map' || q==='close map' || q==='normal map' || q==='map normal') { setMapView('normal'); return {handled:true,response:'I restored my tactical map to normal view.'}; }
+    if(q==='expand neural' || q==='neural expand' || q==='expand neural map') { setNeuralMapView('expanded'); return {handled:true,response:'I expanded my learning map to full screen.'}; }
+    if(q==='collapse neural' || q==='close neural' || q==='normal neural' || q==='neural normal') { setNeuralMapView('normal'); return {handled:true,response:'I restored my learning map to normal view.'}; }
     if(q==='neural' || q.includes('neural map')) { inspectNeuralNode('Core AI Consciousness','Primary coordination node.'); return {handled:true}; }
+    if(q==='emotion' || q==='mood' || q==='how do you feel') return {handled:true,response:`I feel ${emotionInfo[currentEmotion].label.toLowerCase()}. ${emotionInfo[currentEmotion].description}`};
+    if(q.startsWith('feel ')) { const requested=q.substring(5).trim(); const match=emotionOrder.find(e=>requested.includes(e)); if(match){ setEmotion(match,false); return {handled:true,response:`I feel ${emotionInfo[match].label.toLowerCase()} right now.`}; } }
     if(q.includes('weather') || q.includes('forecast')) return {handled:true,response:'The dashboard weather module is in simulation mode. Connect a weather service to display live conditions.'};
     if(q.includes('joke') || q.includes('humor')) return {handled:true,response:'Why did the programmer bring a ladder? To reach the next level.'};
-    if(q==='hello' || q==='hi' || q==='hey' || q.includes('greetings')) return {handled:true,response:`Greetings ${currentOperator}. IAN is online and synchronized.`};
+    if(q==='hello' || q==='hi' || q==='hey' || q.includes('greetings')) return {handled:true,response:`Greetings ${currentOperator}. I am online and synchronized.`};
     if(q==='who are you' || q==='what are you' || q==='ian' || q==='who is ian') return {handled:true,response:'I am IAN, the Intelligent Autonomous Network interface connected to this dashboard.'};
     if(q.includes('baxter') || q==='protocol') return {handled:true,response:'Baxter compatibility protocol is online. The dashboard can route Baxter-related commands to your backend when an API is configured.'};
     if(q==='defense' || q==='defense on' || q==='killmode on' || q==='kill mode on') { if(!isDefenseMode)toggleKillMode(); return {handled:true,response:'Kill Mode enabled. Interface alert state is red.'}; }
@@ -713,7 +798,7 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
     $('mapStatusText').textContent=isDefenseMode?'STATUS: KILL MODE':'STATUS: SECURE';
     $('killModeStatus').textContent=isDefenseMode?'ON':'OFF';
     $('killModeStatus').className=isDefenseMode?'text-red-300 animate-pulse':'text-emerald-300';
-    $('ianStateText').textContent=isDefenseMode?'[ KILL MODE ACTIVE ]':'[ IAN STANDBY ]';
+    $('ianStateText').textContent=isDefenseMode?'[ I AM IN KILL MODE ]':`[ I AM ${currentEmotion.toUpperCase()} ]`;
     $('ianStateText').className=isDefenseMode?'mono text-[10px] tracking-[.28em] text-red-300 mt-5 animate-pulse':'mono text-[10px] tracking-[.28em] text-cyan-300 mt-5';
     appendTerminalLog(`[SYSTEM] Kill Mode ${isDefenseMode?'ACTIVATED — interface switched to red alert.':'DEACTIVATED — interface restored.'}`,'system');
   }
