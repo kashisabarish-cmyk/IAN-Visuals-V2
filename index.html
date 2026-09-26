@@ -340,15 +340,14 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
             <button id="neuralExpandedBtn" onclick="setNeuralMapView('expanded')" class="map-view-btn btn px-2 py-1 rounded-md border border-white/10 bg-white/5 mono text-[8px]" title="Expanded neural map view">EXPAND</button>
           </div>
         </div>
-        <div id="neuralViewport" class="viewport relative flex-1 min-h-[290px] rounded-xl overflow-hidden border border-purple-400/10 bg-[#05030d]">
-          <svg class="absolute inset-0 w-full h-full opacity-35"><line x1="50%" y1="50%" x2="18%" y2="18%" stroke="#9d5cff"/><line x1="50%" y1="50%" x2="82%" y2="18%" stroke="#00eaff"/><line x1="50%" y1="50%" x2="18%" y2="82%" stroke="#00f59b"/><line x1="50%" y1="50%" x2="82%" y2="82%" stroke="#9d5cff"/></svg>
-          <div onclick="inspectNeuralNode('Core AI Consciousness','Primary coordination node.')" class="node absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full orb flex items-center justify-center"><i class="fa-solid fa-microchip text-white"></i></div>
-          <button onclick="inspectNeuralNode('Empathy Matrix','Human-language and emotional context layer.')" class="node absolute left-[18%] top-[18%] -translate-x-1/2 -translate-y-1/2 mono text-[9px] px-2 py-1 rounded-lg border border-purple-400/30 bg-purple-500/10 text-cyan-300">EMPATHY</button>
-          <button onclick="inspectNeuralNode('Quantum Syntax','Advanced language-processing layer.')" class="node absolute left-[82%] top-[18%] -translate-x-1/2 -translate-y-1/2 mono text-[9px] px-2 py-1 rounded-lg border border-cyan-400/30 bg-cyan-500/10 text-cyan-300">QUANTUM</button>
-          <button onclick="inspectNeuralNode('Tactical Radar','Spatial visualization layer.')" class="node absolute left-[18%] top-[82%] -translate-x-1/2 -translate-y-1/2 mono text-[9px] px-2 py-1 rounded-lg border border-emerald-400/30 bg-emerald-500/10 text-emerald-300">RADAR</button>
-          <button onclick="inspectNeuralNode('Baxter Protocol','Compatibility layer for Baxter-related commands.')" class="node absolute left-[82%] top-[82%] -translate-x-1/2 -translate-y-1/2 mono text-[9px] px-2 py-1 rounded-lg border border-purple-400/30 bg-purple-500/10 text-cyan-300">BAXTER</button>
+        <div id="neuralViewport" class="viewport relative flex-1 min-h-[290px] rounded-xl overflow-hidden border border-white/10 bg-[#05030d]">
+          <svg id="neuralSvg" class="absolute inset-0 w-full h-full opacity-50 pointer-events-none"></svg>
+          <div id="neuralNodes" class="absolute inset-0"></div>
+          <div id="neuralEmpty" class="absolute inset-0 flex items-center justify-center p-8 text-center">
+            <div><div class="text-cyan-300 mono text-[10px] tracking-[.2em] mb-2">NEURAL MEMORY EMPTY</div><div class="text-slate-500 mono text-[9px] leading-5">Teach me something with “learn …” and it will appear here as a neuron.</div></div>
+          </div>
         </div>
-        <div class="pt-3 flex justify-between mono text-[9px]"><span class="text-slate-500">NODES: 05 · SYNC: 99.1%</span><button onclick="addNewNeuralMemory()" class="text-cyan-300 hover:text-white">+ INJECT MEMORY</button></div>
+        <div class="pt-3 flex justify-between mono text-[9px]"><span id="neuralStatusInfo" class="text-slate-500">NODES: 0 · LINKS: 0 · SYNC: 99.1%</span><button onclick="addNewNeuralMemory()" class="text-cyan-300 hover:text-white">+ INJECT MEMORY</button></div>
       </article>
     </section>
 
@@ -728,7 +727,7 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
     const q=raw.trim().toLowerCase();
     if(q==='clear' || q==='cls') { return {handled:true,response:'I cleared the visible command activity. Conversation history remains preserved.'}; }
     if(q==='help' || q==='commands' || q==='help me') {
-      return {handled:true,response:'Available commands: help, status, diagnostics, weather, joke, hello, who are you, ping, expand map, normal map, expand neural, normal neural, show history, conversation history, hide history, emotion, mood, set emotion <emotion>, and emotion trigger words like yay, ugh, sigh, hmm, focus, uh oh, and wow, learn, remember, recall, voice on, voice off, mic, clear.'};
+      return {handled:true,response:'Available commands: help, status, diagnostics, weather, joke, hello, who are you, ping, expand map, normal map, expand neural, normal neural, show history, hide history, emotion, set emotion, learn, remember, recall, link neuron 1 to neuron 2, combine neuron 1 and neuron 2, voice on, voice off, mic, and clear.'};
     }
     if(q==='show history' || q==='conversation history' || q==='show conversation' || q==='history' || q==='show my history'){
       showConversationHistory();
@@ -749,9 +748,9 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
     if(q.startsWith('do you remember ')) {
       return {handled:true,response:recallMemory(raw.substring(16))};
     }
-    if(q.startsWith('recall ')) {
-      return {handled:true,response:recallMemory(raw.substring(7))};
-    }
+    if(q.startsWith('recall ')) { return {handled:true,response:recallMemory(raw.substring(7))}; }
+    if(q.startsWith('link ') || q.startsWith('connect ')) { const m=raw.match(/^(?:link|connect)\s+(.+?)\s+(?:to|with|and)\s+(.+)$/i); if(m){ const r=linkNeurons(m[1],m[2]); return {handled:true,response:r.response}; } return {handled:true,response:'Use link neuron 1 to neuron 2, or link two memory phrases.'}; }
+    if(q.startsWith('combine ') || q.startsWith('merge ')) { const m=raw.match(/^(?:combine|merge)\s+(.+?)\s+(?:and|with|into)\s+(.+)$/i); if(m){ const r=combineNeurons(m[1],m[2]); return {handled:true,response:r.response}; } return {handled:true,response:'Use combine neuron 1 and neuron 2.'}; }
     if(['status','diagnostics','diagnostic','system','diag'].includes(q)) return {handled:true,response:`Diagnostics nominal. Operator ${currentOperator}. Synapse load is ${$('synapseLoadVal').textContent}. Quantum coherence is 99.1 percent. Voice output is ${isVoiceEnabled?'online':'muted'}.`};
     if(q==='ping' || q==='radar' || q==='refresh radar') { pingMap(); return {handled:true}; }
     if(q==='expand' || q==='expand map' || q==='map expand') { setMapView('expanded'); return {handled:true,response:'I expanded my tactical map to full screen.'}; }
@@ -804,27 +803,44 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
   }
 
   function pingMap(){ appendTerminalLog('[MAP] Radar beacons recalibrated and synchronized.','system'); speak('Radar sectors pinged. All dashboard tracking beacons are reporting green.'); }
-  function inspectNeuralNode(name,desc){ appendTerminalLog(`[NEURAL] ${name}: ${desc}`,'system'); speak(`Inspecting ${name}. ${desc}`); }
+  // ---------- NEURAL MEMORY GRAPH ----------
+  function loadNeuralNeurons(){
+    try { return JSON.parse(localStorage.getItem('ian-neurons') || '[]'); } catch { return []; }
+  }
+  function saveNeuralNeurons(neurons){ localStorage.setItem('ian-neurons', JSON.stringify(neurons.slice(-150))); }
+  function neuronWords(text){ return new Set(String(text).toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(w=>w.length>3 && !['that','this','with','from','have','will','like','about','because','into','they','them','your','my','ian'].includes(w))); }
+  function neuronSimilarity(a,b){ const A=neuronWords(a), B=neuronWords(b); let shared=0; A.forEach(w=>{if(B.has(w))shared++;}); return shared; }
+  function autoLinkNeurons(neurons){
+    const links=new Set();
+    neurons.forEach(n=>(n.links||[]).forEach(id=>links.add([n.id,id].sort().join('|'))));
+    for(let i=0;i<neurons.length;i++){ for(let j=i+1;j<neurons.length;j++){
+      if(neuronSimilarity(neurons[i].text,neurons[j].text)>=1){
+        const key=[neurons[i].id,neurons[j].id].sort().join('|'); links.add(key);
+      }
+    }}
+    neurons.forEach(n=>n.links=[]);
+    links.forEach(key=>{ const [a,b]=key.split('|'); const A=neurons.find(n=>String(n.id)===a), B=neurons.find(n=>String(n.id)===b); if(A&&B){A.links.push(B.id);B.links.push(A.id);} });
+  }
+  function renderNeuralMap(){
+    const neurons=loadNeuralNeurons(); const nodes=$('neuralNodes'), svg=$('neuralSvg'), empty=$('neuralEmpty'); if(!nodes||!svg)return;
+    autoLinkNeurons(neurons); saveNeuralNeurons(neurons); nodes.innerHTML=''; svg.innerHTML='';
+    empty.classList.toggle('hidden',neurons.length>0);
+    const positions=neurons.map((n,i)=>{ const angle=(i/Math.max(neurons.length,1))*Math.PI*2-Math.PI/2; const radius=neurons.length<5?31:38; return {x:50+Math.cos(angle)*radius,y:50+Math.sin(angle)*radius}; });
+    const byId=new Map(neurons.map((n,i)=>[n.id,{n,p:positions[i]}]));
+    neurons.forEach((n,i)=>{ (n.links||[]).forEach(id=>{ const other=byId.get(id); if(!other || String(n.id)>String(id))return; const line=document.createElementNS('http://www.w3.org/2000/svg','line'); line.setAttribute('x1',positions[i].x+'%');line.setAttribute('y1',positions[i].y+'%');line.setAttribute('x2',other.p.x+'%');line.setAttribute('y2',other.p.y+'%');line.setAttribute('stroke','var(--accent)');line.setAttribute('stroke-width','1.2');line.setAttribute('stroke-dasharray','4 4');line.setAttribute('opacity','.6');svg.appendChild(line); }); });
+    neurons.forEach((n,i)=>{ const p=positions[i], el=document.createElement('button'); el.className='node absolute -translate-x-1/2 -translate-y-1/2 max-w-[130px] px-2 py-1.5 rounded-lg border border-white/10 bg-black/60 text-cyan-300 mono text-[8px] text-center shadow-lg'; el.style.left=p.x+'%';el.style.top=p.y+'%'; el.title=`Neuron ${i+1}: ${n.text}`; el.innerHTML=`<span class="block text-[7px] opacity-60">NEURON ${i+1}</span><span>${escapeHtml(n.label || n.text.slice(0,28))}</span>`; el.onclick=()=>inspectNeuralNeuron(n.id); nodes.appendChild(el); });
+    $('neuralStatusInfo').textContent=`NODES: ${neurons.length} · LINKS: ${neurons.reduce((a,n)=>a+(n.links||[]).length,0)/2} · SYNC: 99.1%`;
+  }
+  function inspectNeuralNeuron(id){ const n=loadNeuralNeurons().find(x=>x.id===id); if(!n)return; appendTerminalLog(`[NEURAL] ${n.label}: ${n.text}`,'system'); triggerIanSpeech(`I remember ${n.text}.`); }
+  function resolveNeuron(ref){ const neurons=loadNeuralNeurons(); const q=String(ref).trim().toLowerCase(); const num=parseInt(q.replace(/^neuron\s*/,'').replace(/^#/,''),10); if(Number.isInteger(num)&&num>0&&num<=neurons.length)return neurons[num-1]; return neurons.find(n=>String(n.id)===q || (n.label||'').toLowerCase()===q || n.text.toLowerCase().includes(q)); }
+  function linkNeurons(aRef,bRef){ const neurons=loadNeuralNeurons(), a=resolveNeuron(aRef), b=resolveNeuron(bRef); if(!a||!b||a.id===b.id)return {ok:false,response:'I could not identify two different neurons to link.'}; a.links=a.links||[];b.links=b.links||[]; if(!a.links.includes(b.id))a.links.push(b.id);if(!b.links.includes(a.id))b.links.push(a.id);saveNeuralNeurons(neurons);renderNeuralMap();return {ok:true,response:`I linked ${a.label} with ${b.label}.`}; }
+  function combineNeurons(aRef,bRef){ const neurons=loadNeuralNeurons(), a=resolveNeuron(aRef), b=resolveNeuron(bRef); if(!a||!b||a.id===b.id)return {ok:false,response:'I could not identify two different neurons to combine.'}; const combined={id:Date.now(),label:(a.label||a.text.slice(0,24))+' + '+(b.label||b.text.slice(0,24)),text:`${a.text}; ${b.text}`,learnedBy:currentOperator,learnedAt:new Date().toISOString(),links:[...(a.links||[]),...(b.links||[])].filter(id=>id!==a.id&&id!==b.id)}; const remaining=neurons.filter(n=>n.id!==a.id&&n.id!==b.id); remaining.forEach(n=>{n.links=(n.links||[]).map(id=>id===a.id||id===b.id?combined.id:id).filter((id,x,arr)=>arr.indexOf(id)===x);}); remaining.push(combined); autoLinkNeurons(remaining);saveNeuralNeurons(remaining);renderNeuralMap();appendTerminalLog(`[NEURAL] Combined '${a.label}' and '${b.label}' into '${combined.label}'.`,'system');return {ok:true,response:`I combined ${a.label} and ${b.label} into one neuron.`}; }
+
   // ---------- LEARNING / MEMORY ----------
-  function loadLearnedMemories(){
-    try { return JSON.parse(localStorage.getItem('ian-learned-memory') || '[]'); }
-    catch { return []; }
-  }
-
-  function saveLearnedMemories(memories){
-    localStorage.setItem('ian-learned-memory', JSON.stringify(memories.slice(-100)));
-  }
-
-  function learnFact(fact){
-    const clean = fact.trim().replace(/^that\s+/i,'');
-    if(!clean) return {ok:false};
-    const memories = loadLearnedMemories();
-    const entry = { id: Date.now(), text: clean, learnedBy: currentOperator, learnedAt: new Date().toISOString() };
-    const duplicate = memories.some(m => m.text.toLowerCase() === clean.toLowerCase());
-    if(!duplicate) { memories.push(entry); saveLearnedMemories(memories); }
-    appendTerminalLog(`[NEURAL] ${duplicate ? 'Memory already known' : 'New memory learned'}: ${clean}`, 'system');
-    return {ok:true, duplicate};
-  }
+  function loadLearnedMemories(){ try { return JSON.parse(localStorage.getItem('ian-learned-memory') || '[]'); } catch { return []; } }
+  function saveLearnedMemories(memories){ localStorage.setItem('ian-learned-memory', JSON.stringify(memories.slice(-100))); }
+  function syncMemoriesToNeurons(){ const memories=loadLearnedMemories(), neurons=loadNeuralNeurons(); let changed=false; memories.forEach(m=>{ if(!neurons.some(n=>n.sourceMemoryId===m.id || n.text.toLowerCase()===m.text.toLowerCase())){ neurons.push({id:m.id,text:m.text,label:m.text.length>28?m.text.slice(0,28)+'…':m.text,sourceMemoryId:m.id,learnedBy:m.learnedBy,learnedAt:m.learnedAt,links:[]}); changed=true; }}); autoLinkNeurons(neurons); if(changed||neurons.length)saveNeuralNeurons(neurons); renderNeuralMap(); }
+  function learnFact(fact){ const clean=fact.trim().replace(/^that\s+/i,''); if(!clean)return {ok:false}; const memories=loadLearnedMemories(); const duplicate=memories.some(m=>m.text.toLowerCase()===clean.toLowerCase()); if(!duplicate){const entry={id:Date.now(),text:clean,learnedBy:currentOperator,learnedAt:new Date().toISOString()};memories.push(entry);saveLearnedMemories(memories);syncMemoriesToNeurons();} appendTerminalLog(`[NEURAL] ${duplicate?'Memory already known':'New memory learned'}: ${clean}`,'system'); return {ok:true,duplicate}; }
 
   function recallMemory(query){
     const q=query.trim().toLowerCase();
@@ -836,13 +852,7 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
     return `I remember: ${matches.map(m=>m.text).join('; ')}.`;
   }
 
-  function addNewNeuralMemory(){
-    const memories=loadLearnedMemories();
-    if(!memories.length){ triggerIanSpeech('My learning memory is ready. Teach me something with: learn followed by the information you want me to remember.'); return; }
-    const recent=memories[memories.length-1];
-    appendTerminalLog(`[NEURAL] Latest learned memory: ${recent.text}`,'system');
-    speak(`My latest learned memory is ${recent.text}.`);
-  }
+  function addNewNeuralMemory(){ const memories=loadLearnedMemories(); syncMemoriesToNeurons(); if(!memories.length){triggerIanSpeech('My learning memory is empty. Teach me something with learn followed by the information you want me to remember.');return;} const recent=memories[memories.length-1]; triggerIanSpeech(`My latest learned memory is ${recent.text}.`); }
 
   function toggleKillMode(){
     isDefenseMode=!isDefenseMode;
@@ -881,6 +891,7 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
   function toast(msg){ const t=$('toast');t.textContent=msg;t.classList.remove('hidden');clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.classList.add('hidden'),3000); }
 
   document.addEventListener('click',e=>{ if(!e.target.closest('#colorMenu') && !e.target.closest('[onclick="toggleColorMenu()"]')) $('colorMenu')?.classList.remove('open'); });
+  syncMemoriesToNeurons();
 
   // Close expanded maps with Escape.
   document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if($('historyOverlay') && !$('historyOverlay').classList.contains('hidden')) hideConversationHistory(); if(isMapExpanded)toggleExpandMap(); if(isNeuralMapExpanded)toggleExpandNeuralMap(); } });
