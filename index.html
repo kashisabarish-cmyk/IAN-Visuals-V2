@@ -276,6 +276,23 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
     #ianTalkingOrb::before, #ianTalkingOrb::after { pointer-events:none; }
     @media(max-width:1279px) { #ianCoreCard { min-height:500px !important; padding-top:90px !important; padding-bottom:90px !important; } }
     @media(max-width:640px) { #ianCoreCard { min-height:470px !important; padding-top:82px !important; padding-bottom:82px !important; } #ianCoreCard > .relative { width:280px !important; height:280px !important; flex-basis:280px !important; } }
+
+/* Numbered neural nodes: the number identifies the neuron, while the native hover tooltip explains it. */
+#neuralNodes .neural-circle {
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  cursor:pointer !important;
+}
+#neuralNodes .neuron-number {
+  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+  font-size:12px;
+  font-weight:800;
+  line-height:1;
+  color:#fff;
+  text-shadow:0 0 8px color-mix(in srgb,var(--accent) 85%,transparent);
+  pointer-events:none;
+}
 </style>
 
 
@@ -894,7 +911,7 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
       });
     });
 
-    // Render clean circles only. No title/aria tooltip and no pop-up text.
+    // Render numbered neurons. Hovering shows exactly what each neuron represents.
     neurons.forEach((n,i)=>{
       const p=positions[i];
       const el=document.createElement('button');
@@ -902,11 +919,13 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
       el.className='node neural-circle absolute -translate-x-1/2 -translate-y-1/2';
       el.style.left=p.x+'%';
       el.style.top=p.y+'%';
-      el.removeAttribute('title');
-      el.removeAttribute('aria-label');
       el.dataset.neuronId=n.id;
       el.dataset.neuronIndex=i+1;
-      el.innerHTML='';
+      const neuronName=`Neuron ${i+1}`;
+      const description=n.text || n.label || 'No description stored.';
+      el.title=`${neuronName}: ${description}`;
+      el.setAttribute('aria-label',`${neuronName}: ${description}`);
+      el.innerHTML=`<span class="neuron-number">${i+1}</span>`;
       el.onclick=()=>inspectNeuralNeuron(n.id);
       nodes.appendChild(el);
     });
