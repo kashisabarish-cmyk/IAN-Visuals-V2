@@ -263,6 +263,25 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
 
 
 
+
+    /* Neural graph: keep nodes fully inside the viewport and keep link lines visible. */
+    #neuralViewport { overflow:hidden; padding:18px; }
+    #neuralSvg { z-index:1; overflow:visible; opacity:1 !important; }
+    #neuralNodes { z-index:2; inset:18px !important; }
+    #neuralNodes .node {
+      width:82px; height:82px; max-width:none !important;
+      padding:8px !important; border-radius:9999px !important;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      overflow:hidden;
+      word-break:break-word;
+    }
+    #neuralNodes .node span:last-child {
+      display:block; max-width:66px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+    /* Never clip the main I.A.N. orb while it animates or scales. */
+    #ianCoreCard, #ianCoreCard .relative { overflow:visible !important; }
+    #ianTalkingOrb { flex-shrink:0; overflow:visible; }
+
 </head>
 <body class="app-bg grid-bg">
   <div id="toast" class="fixed top-20 right-5 z-[200] hidden px-4 py-3 rounded-xl glass mono text-xs"></div>
@@ -832,9 +851,9 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
     const neurons=loadNeuralNeurons(); const nodes=$('neuralNodes'), svg=$('neuralSvg'), empty=$('neuralEmpty'); if(!nodes||!svg)return;
     autoLinkNeurons(neurons); saveNeuralNeurons(neurons); nodes.innerHTML=''; svg.innerHTML='';
     empty.classList.toggle('hidden',neurons.length>0);
-    const positions=neurons.map((n,i)=>{ const angle=(i/Math.max(neurons.length,1))*Math.PI*2-Math.PI/2; const radius=neurons.length<5?31:38; return {x:50+Math.cos(angle)*radius,y:50+Math.sin(angle)*radius}; });
+    const positions=neurons.map((n,i)=>{ const angle=(i/Math.max(neurons.length,1))*Math.PI*2-Math.PI/2; const radius=neurons.length<5?29:34; return {x:50+Math.cos(angle)*radius,y:50+Math.sin(angle)*radius}; });
     const byId=new Map(neurons.map((n,i)=>[n.id,{n,p:positions[i]}]));
-    neurons.forEach((n,i)=>{ (n.links||[]).forEach(id=>{ const other=byId.get(id); if(!other || String(n.id)>String(id))return; const line=document.createElementNS('http://www.w3.org/2000/svg','line'); line.setAttribute('x1',positions[i].x+'%');line.setAttribute('y1',positions[i].y+'%');line.setAttribute('x2',other.p.x+'%');line.setAttribute('y2',other.p.y+'%');line.setAttribute('stroke','var(--accent)');line.setAttribute('stroke-width','1.2');line.setAttribute('stroke-dasharray','4 4');line.setAttribute('opacity','.6');svg.appendChild(line); }); });
+    neurons.forEach((n,i)=>{ (n.links||[]).forEach(id=>{ const other=byId.get(id); if(!other || String(n.id)>String(id))return; const line=document.createElementNS('http://www.w3.org/2000/svg','line'); line.setAttribute('x1',positions[i].x+'%');line.setAttribute('y1',positions[i].y+'%');line.setAttribute('x2',other.p.x+'%');line.setAttribute('y2',other.p.y+'%');line.setAttribute('stroke','var(--accent)');line.setAttribute('stroke-width','2');line.setAttribute('stroke-dasharray','6 4');line.setAttribute('opacity','.9');line.setAttribute('vector-effect','non-scaling-stroke');svg.appendChild(line); }); });
     neurons.forEach((n,i)=>{ const p=positions[i], el=document.createElement('button'); el.className='node absolute -translate-x-1/2 -translate-y-1/2 max-w-[130px] px-2 py-1.5 rounded-lg border border-white/10 bg-black/60 text-cyan-300 mono text-[8px] text-center shadow-lg'; el.style.left=p.x+'%';el.style.top=p.y+'%'; el.title=`Neuron ${i+1}: ${n.text}`; el.innerHTML=`<span class="block text-[7px] opacity-60">NEURON ${i+1}</span><span>${escapeHtml(n.label || n.text.slice(0,28))}</span>`; el.onclick=()=>inspectNeuralNeuron(n.id); nodes.appendChild(el); });
     $('neuralStatusInfo').textContent=`NODES: ${neurons.length} · LINKS: ${neurons.reduce((a,n)=>a+(n.links||[]).length,0)/2} · SYNC: 99.1%`;
   }
