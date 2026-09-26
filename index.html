@@ -248,7 +248,6 @@ article.glass:hover{transform:none!important;border-color:rgba(56,232,255,.38)!i
 .mono{letter-spacing:.04em}
 #mapCard .mono:first-child,#neuralMapCard .mono:first-child{color:#62edff!important}
 #colorMenu{background:rgba(2,14,24,.96)!important;border:1px solid rgba(56,232,255,.28)!important}
-#toast{border-color:rgba(56,232,255,.35)!important;background:rgba(2,14,24,.94)!important}
 body.kill-mode{background:radial-gradient(ellipse at center,rgba(120,0,10,.16),transparent 45%),#0b0204!important}
 body.kill-mode .glass{background:linear-gradient(135deg,rgba(37,5,10,.88),rgba(12,2,5,.82))!important}
 body.kill-mode #ianTalkingOrb{background:radial-gradient(circle at 35% 25%,#fff 0 2%,#ffd6d9 5%,#ff3049 14%,#a00018 40%,#33030a 66%,#090103 76%,transparent 77%)!important}
@@ -259,32 +258,32 @@ html:not(.dark) #terminalOutput{background:rgba(247,251,253,.9)!important;color:
 html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:#17313c!important}
 @media(max-width:1279px){#ianTalkingOrb{width:145px!important;height:145px!important}}
 
+
+    /* Neural graph: keep nodes fully inside the viewport and keep link lines visible. */
+    /* Neural graph uses one shared padded coordinate system so links land exactly on nodes. */
+    #neuralViewport { overflow:hidden; padding:18px; }
+    #neuralSvg { z-index:1; inset:18px !important; width:auto !important; height:auto !important; overflow:visible; opacity:1 !important; pointer-events:none !important; }
+    #neuralNodes { z-index:2; inset:18px !important; overflow:visible !important; }
+    #neuralEmpty { z-index:3; pointer-events:none; }
+    #neuralNodes .node { width:58px !important; height:58px !important; min-width:58px !important; min-height:58px !important; max-width:58px !important; max-height:58px !important; padding:0 !important; border-radius:50% !important; border:2px solid color-mix(in srgb,var(--accent) 75%,white 10%) !important; background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--accent) 42%,white 4%),color-mix(in srgb,var(--accent) 14%,#02050b 86%) 58%,#02050b 100%) !important; box-shadow:0 0 12px color-mix(in srgb,var(--accent) 45%,transparent), inset 0 0 12px color-mix(in srgb,var(--accent) 20%,transparent) !important; display:block !important; overflow:visible !important; }
+    #neuralNodes .node:hover { transform:translate(-50%,-50%) scale(1.12); }
+    .neural-link-line { stroke:var(--accent) !important; filter:drop-shadow(0 0 5px color-mix(in srgb,var(--accent) 65%,transparent)); }
+    /* Never clip the main I.A.N. orb while it animates or scales. */
+    #ianCoreCard, #ianCoreCard .relative { overflow:visible !important; }
+    #ianCoreCard { min-height:560px !important; padding-top:105px !important; padding-bottom:105px !important; }
+    #ianCoreCard > .relative { width:310px !important; height:310px !important; display:flex !important; align-items:center !important; justify-content:center !important; flex:0 0 310px !important; overflow:visible !important; }
+    #ianTalkingOrb { flex-shrink:0; overflow:visible; position:relative; z-index:2; }
+    #ianTalkingOrb::before, #ianTalkingOrb::after { pointer-events:none; }
+    @media(max-width:1279px) { #ianCoreCard { min-height:500px !important; padding-top:90px !important; padding-bottom:90px !important; } }
+    @media(max-width:640px) { #ianCoreCard { min-height:470px !important; padding-top:82px !important; padding-bottom:82px !important; } #ianCoreCard > .relative { width:280px !important; height:280px !important; flex-basis:280px !important; } }
 </style>
 
 
 
 
-    /* Neural graph: keep nodes fully inside the viewport and keep link lines visible. */
-    #neuralViewport { overflow:hidden; padding:18px; }
-    #neuralSvg { z-index:1; overflow:visible; opacity:1 !important; }
-    #neuralNodes { z-index:2; inset:18px !important; }
-    #neuralNodes .node {
-      width:82px; height:82px; max-width:none !important;
-      padding:8px !important; border-radius:9999px !important;
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
-      overflow:hidden;
-      word-break:break-word;
-    }
-    #neuralNodes .node span:last-child {
-      display:block; max-width:66px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-    }
-    /* Never clip the main I.A.N. orb while it animates or scales. */
-    #ianCoreCard, #ianCoreCard .relative { overflow:visible !important; }
-    #ianTalkingOrb { flex-shrink:0; overflow:visible; }
 
 </head>
 <body class="app-bg grid-bg">
-  <div id="toast" class="fixed top-20 right-5 z-[200] hidden px-4 py-3 rounded-xl glass mono text-xs"></div>
 
   <header class="sticky top-0 z-50 px-4 md:px-6 py-3 border-b border-white/10 bg-[#050711]/80 backdrop-blur-xl">
     <div class="max-w-[1700px] mx-auto flex items-center justify-between gap-4">
@@ -848,14 +847,70 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
     links.forEach(key=>{ const [a,b]=key.split('|'); const A=neurons.find(n=>String(n.id)===a), B=neurons.find(n=>String(n.id)===b); if(A&&B){A.links.push(B.id);B.links.push(A.id);} });
   }
   function renderNeuralMap(){
-    const neurons=loadNeuralNeurons(); const nodes=$('neuralNodes'), svg=$('neuralSvg'), empty=$('neuralEmpty'); if(!nodes||!svg)return;
-    autoLinkNeurons(neurons); saveNeuralNeurons(neurons); nodes.innerHTML=''; svg.innerHTML='';
+    const neurons=loadNeuralNeurons();
+    const nodes=$('neuralNodes'), svg=$('neuralSvg'), empty=$('neuralEmpty');
+    if(!nodes||!svg)return;
+    autoLinkNeurons(neurons);
+    saveNeuralNeurons(neurons);
+    nodes.innerHTML='';
+    svg.innerHTML='';
     empty.classList.toggle('hidden',neurons.length>0);
-    const positions=neurons.map((n,i)=>{ const angle=(i/Math.max(neurons.length,1))*Math.PI*2-Math.PI/2; const radius=neurons.length<5?29:34; return {x:50+Math.cos(angle)*radius,y:50+Math.sin(angle)*radius}; });
-    const byId=new Map(neurons.map((n,i)=>[n.id,{n,p:positions[i]}]));
-    neurons.forEach((n,i)=>{ (n.links||[]).forEach(id=>{ const other=byId.get(id); if(!other || String(n.id)>String(id))return; const line=document.createElementNS('http://www.w3.org/2000/svg','line'); line.setAttribute('x1',positions[i].x+'%');line.setAttribute('y1',positions[i].y+'%');line.setAttribute('x2',other.p.x+'%');line.setAttribute('y2',other.p.y+'%');line.setAttribute('stroke','var(--accent)');line.setAttribute('stroke-width','2');line.setAttribute('stroke-dasharray','6 4');line.setAttribute('opacity','.9');line.setAttribute('vector-effect','non-scaling-stroke');svg.appendChild(line); }); });
-    neurons.forEach((n,i)=>{ const p=positions[i], el=document.createElement('button'); el.className='node absolute -translate-x-1/2 -translate-y-1/2 max-w-[130px] px-2 py-1.5 rounded-lg border border-white/10 bg-black/60 text-cyan-300 mono text-[8px] text-center shadow-lg'; el.style.left=p.x+'%';el.style.top=p.y+'%'; el.title=`Neuron ${i+1}: ${n.text}`; el.innerHTML=`<span class="block text-[7px] opacity-60">NEURON ${i+1}</span><span>${escapeHtml(n.label || n.text.slice(0,28))}</span>`; el.onclick=()=>inspectNeuralNeuron(n.id); nodes.appendChild(el); });
-    $('neuralStatusInfo').textContent=`NODES: ${neurons.length} · LINKS: ${neurons.reduce((a,n)=>a+(n.links||[]).length,0)/2} · SYNC: 99.1%`;
+    if(!neurons.length){ $('neuralStatusInfo').textContent='NODES: 0 · LINKS: 0 · SYNC: 99.1%'; return; }
+
+    // Use one coordinate system for both SVG links and neuron centers.
+    // Keep a generous edge margin so no circle can be clipped.
+    const margin=14;
+    const radiusPct=7.5;
+    const orbit=Math.min(50-radiusPct-margin/2,50-radiusPct-margin/2);
+    const radius=neurons.length===1 ? 0 : (neurons.length<5 ? 27 : 33);
+    const orbitRadius=Math.min(radius,orbit);
+    const positions=neurons.map((n,i)=>{
+      const angle=(i/neurons.length)*Math.PI*2-Math.PI/2;
+      return {x:50+Math.cos(angle)*orbitRadius,y:50+Math.sin(angle)*orbitRadius};
+    });
+    const byId=new Map(neurons.map((n,i)=>[String(n.id),{n,p:positions[i]}]));
+
+    // Draw every connection exactly once. Lines are behind the circles.
+    const drawn=new Set();
+    neurons.forEach((n,i)=>{
+      (n.links||[]).forEach(id=>{
+        const key=[String(n.id),String(id)].sort().join('|');
+        if(drawn.has(key))return;
+        const other=byId.get(String(id));
+        if(!other)return;
+        drawn.add(key);
+        const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+        line.setAttribute('x1',positions[i].x+'%');
+        line.setAttribute('y1',positions[i].y+'%');
+        line.setAttribute('x2',other.p.x+'%');
+        line.setAttribute('y2',other.p.y+'%');
+        line.setAttribute('stroke','var(--accent)');
+        line.setAttribute('stroke-width','4');
+        line.setAttribute('stroke-linecap','round');
+        line.setAttribute('opacity','1');
+        line.setAttribute('vector-effect','non-scaling-stroke');
+        line.classList.add('neural-link-line');
+        svg.appendChild(line);
+      });
+    });
+
+    // Render clean circles only. No title/aria tooltip and no pop-up text.
+    neurons.forEach((n,i)=>{
+      const p=positions[i];
+      const el=document.createElement('button');
+      el.type='button';
+      el.className='node neural-circle absolute -translate-x-1/2 -translate-y-1/2';
+      el.style.left=p.x+'%';
+      el.style.top=p.y+'%';
+      el.removeAttribute('title');
+      el.removeAttribute('aria-label');
+      el.dataset.neuronId=n.id;
+      el.dataset.neuronIndex=i+1;
+      el.innerHTML='';
+      el.onclick=()=>inspectNeuralNeuron(n.id);
+      nodes.appendChild(el);
+    });
+    $('neuralStatusInfo').textContent=`NODES: ${neurons.length} · LINKS: ${drawn.size} · SYNC: 99.1%`;
   }
   function inspectNeuralNeuron(id){ const n=loadNeuralNeurons().find(x=>x.id===id); if(!n)return; appendTerminalLog(`[NEURAL] ${n.label}: ${n.text}`,'system'); triggerIanSpeech(`I remember ${n.text}.`); }
   function resolveNeuron(ref){ const neurons=loadNeuralNeurons(); const q=String(ref).trim().toLowerCase(); const num=parseInt(q.replace(/^neuron\s*/,'').replace(/^#/,''),10); if(Number.isInteger(num)&&num>0&&num<=neurons.length)return neurons[num-1]; return neurons.find(n=>String(n.id)===q || (n.label||'').toLowerCase()===q || n.text.toLowerCase().includes(q)); }
@@ -914,7 +969,7 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
   }
   function startTelemetrySimulation(){ setInterval(()=>{ if(!telemetryChart)return; const d=telemetryChart.data; d.labels.shift();d.labels.push(new Date().toTimeString().slice(3,5)); const n=Math.floor(Math.random()*35)+45;d.datasets[0].data.shift();d.datasets[0].data.push(n);$('synapseLoadVal').textContent=n+'%';$('synapseBar').style.width=n+'%';telemetryChart.update('none'); },2500); }
 
-  function toast(msg){ const t=$('toast');t.textContent=msg;t.classList.remove('hidden');clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.classList.add('hidden'),3000); }
+  function toast(msg){ appendTerminalLog(`[SYSTEM] ${msg}`,'system'); }
 
   document.addEventListener('click',e=>{ if(!e.target.closest('#colorMenu') && !e.target.closest('[onclick="toggleColorMenu()"]')) $('colorMenu')?.classList.remove('open'); });
   syncMemoriesToNeurons();
