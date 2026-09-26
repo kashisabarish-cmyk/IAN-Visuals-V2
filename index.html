@@ -121,7 +121,9 @@
       box-shadow:inset 0 0 50px rgba(0,0,0,.55),0 0 25px color-mix(in srgb,var(--accent) 5%,transparent)!important;
     }
     html:not(.dark) .terminal { background:linear-gradient(145deg,#f7faff,#e9f0f8)!important; box-shadow:inset 0 0 30px rgba(15,23,42,.06)!important; }
-        #terminalInput { height:48px!important; border-color:color-mix(in srgb,var(--accent) 20%,rgba(255,255,255,.1))!important; background:color-mix(in srgb,var(--bg) 72%,transparent)!important; }
+    #consoleCard { min-height:545px!important; }
+    #consoleCard form { margin-top:3px; }
+    #terminalInput { height:48px!important; border-color:color-mix(in srgb,var(--accent) 20%,rgba(255,255,255,.1))!important; background:color-mix(in srgb,var(--bg) 72%,transparent)!important; }
     #terminalInput:focus { box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 10%,transparent),0 0 25px color-mix(in srgb,var(--accent) 10%,transparent); }
     #consoleMicBtn, #micBtn, #voiceBtn, #defenseBtn, header .btn:not(#defenseBtn) { background:color-mix(in srgb,var(--accent) 5%,transparent)!important; border-color:color-mix(in srgb,var(--accent) 18%,transparent)!important; }
     #consoleMicBtn:hover, #micBtn:hover, #voiceBtn:hover, header .btn:hover { background:color-mix(in srgb,var(--accent) 15%,transparent)!important; border-color:var(--accent)!important; }
@@ -131,7 +133,7 @@
     @keyframes orbitPulse { 50%{transform:scale(1.08);opacity:.45} }
     #mapCard, #neuralMapCard { min-height:400px!important; }
     #mapCard > div:first-child, #neuralMapCard > div:first-child { padding-bottom:10px; border-bottom:1px solid color-mix(in srgb,var(--accent) 10%,transparent); }
-    #mapCard h2, #neuralMapCard h2, #ianCoreCard h2 { letter-spacing:.02em; font-size:15px; }
+    #mapCard h2, #neuralMapCard h2, #consoleCard h2 { letter-spacing:.02em; font-size:15px; }
     #mapCard button, #neuralMapCard button { transition:.2s; }
     .node { box-shadow:0 8px 25px rgba(0,0,0,.25); backdrop-filter:blur(8px); }
     .node:hover { box-shadow:0 0 28px color-mix(in srgb,var(--accent) 25%,transparent); }
@@ -160,14 +162,7 @@
     .map-fullscreen .viewport::after { inset:18px; border-width:2px; }
     #colorMenu { box-shadow:0 25px 70px rgba(0,0,0,.4); }
     .swatch { width:30px;height:30px;box-shadow:0 0 12px currentColor; }
-
-    #ianCoreCard{position:relative;display:flex;align-items:center;justify-content:center;}
-    #ianTalkingOrb{margin-inline:auto;transform:translate3d(0,0,0);transition:transform .55s cubic-bezier(.22,1,.36,1),box-shadow .3s ease;}
-    #historyOverlay{align-items:center;}
-    #historyOverlay .history-panel{opacity:0;transform:translate3d(0,70px,0) scale(.985);transition:opacity .45s ease,transform .55s cubic-bezier(.22,1,.36,1);will-change:transform,opacity;}
-    #historyOverlay.history-open .history-panel{opacity:1;transform:translate3d(0,-7vh,0) scale(1);}
-    @media(max-width:640px){#historyOverlay.history-open .history-panel{transform:translate3d(0,-3vh,0) scale(1);}}
-    @media(max-width:1279px){ #ianTalkingOrb{width:125px!important;height:125px!important;}  }
+    @media(max-width:1279px){ #ianTalkingOrb{width:125px!important;height:125px!important;} #consoleCard{min-height:500px!important;} }
 
 /* ================= JARVIS-INSPIRED DEFAULT SKIN ================= */
 :root{
@@ -214,7 +209,7 @@ article.glass:hover{transform:none!important;border-color:rgba(56,232,255,.38)!i
 .viewport::before{content:"";position:absolute;inset:0;border:1px solid rgba(56,232,255,.06);box-shadow:inset 0 0 70px rgba(0,180,255,.08);pointer-events:none}
 #mapViewport .viewport-inner{filter:drop-shadow(0 0 8px rgba(56,232,255,.18))}
 #neuralViewport{background:radial-gradient(circle at center,rgba(32,64,151,.17),transparent 52%),#030711!important}
-#ianCoreCard{background:linear-gradient(180deg,rgba(3,18,31,.9),rgba(1,8,15,.88))!important}
+#consoleCard{background:linear-gradient(180deg,rgba(3,18,31,.9),rgba(1,8,15,.88))!important}
 #terminalOutput{
   background:linear-gradient(180deg,rgba(0,7,13,.86),rgba(1,11,19,.72))!important;
   border:1px solid rgba(56,232,255,.12)!important;
@@ -244,10 +239,11 @@ article.glass:hover{transform:none!important;border-color:rgba(56,232,255,.38)!i
 @keyframes jarvisSpin{to{transform:rotate(342deg)}}
 @keyframes jarvisSpinReverse{to{transform:rotate(-360deg)}}
 #ianStateText{text-shadow:0 0 15px rgba(56,232,255,.55)}
-#mapCard h2,#neuralMapCard h2,#ianCoreCard h2{font-size:12px!important;letter-spacing:.12em;text-transform:uppercase}
+#mapCard h2,#neuralMapCard h2,#consoleCard h2{font-size:12px!important;letter-spacing:.12em;text-transform:uppercase}
 .mono{letter-spacing:.04em}
 #mapCard .mono:first-child,#neuralMapCard .mono:first-child{color:#62edff!important}
 #colorMenu{background:rgba(2,14,24,.96)!important;border:1px solid rgba(56,232,255,.28)!important}
+#toast{border-color:rgba(56,232,255,.35)!important;background:rgba(2,14,24,.94)!important}
 body.kill-mode{background:radial-gradient(ellipse at center,rgba(120,0,10,.16),transparent 45%),#0b0204!important}
 body.kill-mode .glass{background:linear-gradient(135deg,rgba(37,5,10,.88),rgba(12,2,5,.82))!important}
 body.kill-mode #ianTalkingOrb{background:radial-gradient(circle at 35% 25%,#fff 0 2%,#ffd6d9 5%,#ff3049 14%,#a00018 40%,#33030a 66%,#090103 76%,transparent 77%)!important}
@@ -258,49 +254,13 @@ html:not(.dark) #terminalOutput{background:rgba(247,251,253,.9)!important;color:
 html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:#17313c!important}
 @media(max-width:1279px){#ianTalkingOrb{width:145px!important;height:145px!important}}
 
-
-    /* Neural graph: keep nodes fully inside the viewport and keep link lines visible. */
-    /* Neural graph uses one shared padded coordinate system so links land exactly on nodes. */
-    #neuralViewport { overflow:hidden; padding:18px; }
-    #neuralSvg { z-index:1; inset:18px !important; width:auto !important; height:auto !important; overflow:visible; opacity:1 !important; pointer-events:none !important; }
-    #neuralNodes { z-index:2; inset:18px !important; overflow:visible !important; }
-    #neuralEmpty { z-index:3; pointer-events:none; }
-    #neuralNodes .node { width:58px !important; height:58px !important; min-width:58px !important; min-height:58px !important; max-width:58px !important; max-height:58px !important; padding:0 !important; border-radius:50% !important; border:2px solid color-mix(in srgb,var(--accent) 75%,white 10%) !important; background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--accent) 42%,white 4%),color-mix(in srgb,var(--accent) 14%,#02050b 86%) 58%,#02050b 100%) !important; box-shadow:0 0 12px color-mix(in srgb,var(--accent) 45%,transparent), inset 0 0 12px color-mix(in srgb,var(--accent) 20%,transparent) !important; display:block !important; overflow:visible !important; }
-    #neuralNodes .node:hover { transform:translate(-50%,-50%) scale(1.12); }
-    .neural-link-line { stroke:var(--accent) !important; filter:drop-shadow(0 0 5px color-mix(in srgb,var(--accent) 65%,transparent)); }
-    /* Never clip the main I.A.N. orb while it animates or scales. */
-    #ianCoreCard, #ianCoreCard .relative { overflow:visible !important; }
-    #ianCoreCard { min-height:560px !important; padding-top:105px !important; padding-bottom:105px !important; }
-    #ianCoreCard > .relative { width:310px !important; height:310px !important; display:flex !important; align-items:center !important; justify-content:center !important; flex:0 0 310px !important; overflow:visible !important; }
-    #ianTalkingOrb { flex-shrink:0; overflow:visible; position:relative; z-index:2; }
-    #ianTalkingOrb::before, #ianTalkingOrb::after { pointer-events:none; }
-    @media(max-width:1279px) { #ianCoreCard { min-height:500px !important; padding-top:90px !important; padding-bottom:90px !important; } }
-    @media(max-width:640px) { #ianCoreCard { min-height:470px !important; padding-top:82px !important; padding-bottom:82px !important; } #ianCoreCard > .relative { width:280px !important; height:280px !important; flex-basis:280px !important; } }
-
-/* Numbered neural nodes: the number identifies the neuron, while the native hover tooltip explains it. */
-#neuralNodes .neural-circle {
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  cursor:pointer !important;
-}
-#neuralNodes .neuron-number {
-  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
-  font-size:12px;
-  font-weight:800;
-  line-height:1;
-  color:#fff;
-  text-shadow:0 0 8px color-mix(in srgb,var(--accent) 85%,transparent);
-  pointer-events:none;
-}
 </style>
-
-
 
 
 
 </head>
 <body class="app-bg grid-bg">
+  <div id="toast" class="fixed top-20 right-5 z-[200] hidden px-4 py-3 rounded-xl glass mono text-xs"></div>
 
   <header class="sticky top-0 z-50 px-4 md:px-6 py-3 border-b border-white/10 bg-[#050711]/80 backdrop-blur-xl">
     <div class="max-w-[1700px] mx-auto flex items-center justify-between gap-4">
@@ -375,20 +335,21 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
             <button id="neuralExpandedBtn" onclick="setNeuralMapView('expanded')" class="map-view-btn btn px-2 py-1 rounded-md border border-white/10 bg-white/5 mono text-[8px]" title="Expanded neural map view">EXPAND</button>
           </div>
         </div>
-        <div id="neuralViewport" class="viewport relative flex-1 min-h-[290px] rounded-xl overflow-hidden border border-white/10 bg-[#05030d]">
-          <svg id="neuralSvg" class="absolute inset-0 w-full h-full opacity-50 pointer-events-none"></svg>
-          <div id="neuralNodes" class="absolute inset-0"></div>
-          <div id="neuralEmpty" class="absolute inset-0 flex items-center justify-center p-8 text-center">
-            <div><div class="text-cyan-300 mono text-[10px] tracking-[.2em] mb-2">NEURAL MEMORY EMPTY</div><div class="text-slate-500 mono text-[9px] leading-5">Teach me something with “learn …” and it will appear here as a neuron.</div></div>
-          </div>
+        <div id="neuralViewport" class="viewport relative flex-1 min-h-[290px] rounded-xl overflow-hidden border border-purple-400/10 bg-[#05030d]">
+          <svg class="absolute inset-0 w-full h-full opacity-35"><line x1="50%" y1="50%" x2="18%" y2="18%" stroke="#9d5cff"/><line x1="50%" y1="50%" x2="82%" y2="18%" stroke="#00eaff"/><line x1="50%" y1="50%" x2="18%" y2="82%" stroke="#00f59b"/><line x1="50%" y1="50%" x2="82%" y2="82%" stroke="#9d5cff"/></svg>
+          <div onclick="inspectNeuralNode('Core AI Consciousness','Primary coordination node.')" class="node absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full orb flex items-center justify-center"><i class="fa-solid fa-microchip text-white"></i></div>
+          <button onclick="inspectNeuralNode('Empathy Matrix','Human-language and emotional context layer.')" class="node absolute left-[18%] top-[18%] -translate-x-1/2 -translate-y-1/2 mono text-[9px] px-2 py-1 rounded-lg border border-purple-400/30 bg-purple-500/10 text-cyan-300">EMPATHY</button>
+          <button onclick="inspectNeuralNode('Quantum Syntax','Advanced language-processing layer.')" class="node absolute left-[82%] top-[18%] -translate-x-1/2 -translate-y-1/2 mono text-[9px] px-2 py-1 rounded-lg border border-cyan-400/30 bg-cyan-500/10 text-cyan-300">QUANTUM</button>
+          <button onclick="inspectNeuralNode('Tactical Radar','Spatial visualization layer.')" class="node absolute left-[18%] top-[82%] -translate-x-1/2 -translate-y-1/2 mono text-[9px] px-2 py-1 rounded-lg border border-emerald-400/30 bg-emerald-500/10 text-emerald-300">RADAR</button>
+          <button onclick="inspectNeuralNode('Baxter Protocol','Compatibility layer for Baxter-related commands.')" class="node absolute left-[82%] top-[82%] -translate-x-1/2 -translate-y-1/2 mono text-[9px] px-2 py-1 rounded-lg border border-purple-400/30 bg-purple-500/10 text-cyan-300">BAXTER</button>
         </div>
-        <div class="pt-3 flex justify-between mono text-[9px]"><span id="neuralStatusInfo" class="text-slate-500">NODES: 0 · LINKS: 0 · SYNC: 99.1%</span><button onclick="addNewNeuralMemory()" class="text-cyan-300 hover:text-white">+ INJECT MEMORY</button></div>
+        <div class="pt-3 flex justify-between mono text-[9px]"><span class="text-slate-500">NODES: 05 · SYNC: 99.1%</span><button onclick="addNewNeuralMemory()" class="text-cyan-300 hover:text-white">+ INJECT MEMORY</button></div>
       </article>
     </section>
 
     <!-- CENTER -->
-    <section class="xl:col-span-6 flex flex-col gap-5 min-w-0 min-h-[780px] items-center justify-center">
-      <article id="ianCoreCard" class="glass glow rounded-2xl p-5 flex flex-col items-center justify-center min-h-[260px] w-full">
+    <section class="xl:col-span-6 flex flex-col gap-4 min-w-0">
+      <article class="glass glow rounded-2xl p-5 flex flex-col items-center justify-center min-h-[260px]">
         <div class="relative">
           <div class="absolute -inset-10 rounded-full border border-cyan-400/10 animate-pulse"></div>
           <div class="absolute -inset-16 rounded-full border border-purple-400/10"></div>
@@ -402,14 +363,28 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
         <div id="connectionState" class="mono text-[8px] text-slate-600 mt-1">LOCAL COMMAND ENGINE READY</div>
       </article>
 
-      <form id="ianInputForm" onsubmit="handleTerminalInput(event)" class="w-full max-w-2xl flex items-center gap-2 px-1">
-        <div class="relative flex-1">
-          <span class="absolute inset-y-0 left-0 flex items-center pl-4 mono text-[11px] text-cyan-300 pointer-events-none">&gt;</span>
-          <input type="text" id="terminalInput" autocomplete="off" placeholder="Talk to me or enter a command..." class="w-full pl-9 pr-4 py-3 rounded-xl border border-white/10 bg-white/5 text-sm text-slate-100 outline-none transition-all" />
+      <article id="consoleCard" class="glass rounded-2xl p-4 md:p-5 flex flex-col min-h-[520px]">
+        <div class="flex items-center justify-between mb-3">
+          <div><p class="mono text-[9px] tracking-[.2em] text-cyan-400">COMM // 03</p><h2 class="font-semibold text-sm">IAN Interaction Console</h2></div>
+          <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#00f59b]"></span><span class="mono text-[9px] text-slate-500">READY</span></div>
         </div>
-        <button type="submit" class="btn px-5 py-3 rounded-xl mono text-[10px] tracking-widest font-bold">SEND</button>
-      </form>
-
+        <div id="terminalOutput" class="terminal scanlines flex-1 min-h-[330px] overflow-y-auto rounded-xl border border-white/10 p-4 mono text-[11px] leading-5 space-y-1 shadow-inner">
+          <div class="text-slate-500">[SYSTEM] IAN communication channel initialized.</div>
+          <div class="text-cyan-300">[ME] Greetings, operator. I am online and all local interface systems are ready.</div>
+          <div class="text-cyan-300">[ME] Type <span class="text-white">help</span> to list commands or use my microphone.</div>
+        </div>
+        <div class="mt-4 pt-4 border-t border-white/10 translate-y-[-2px]">
+          <form onsubmit="handleTerminalInput(event)" class="flex gap-2">
+            <div class="relative flex-1">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-cyan-400 mono">›</span>
+              <input id="terminalInput" autocomplete="off" class="w-full h-11 rounded-xl bg-black/35 border border-white/10 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/10 outline-none pl-8 pr-3 mono text-[11px] text-cyan-100 placeholder:text-slate-600" placeholder="Type a command or question for IAN...">
+            </div>
+            <button type="button" onclick="toggleMicrophone()" id="consoleMicBtn" class="btn w-11 h-11 rounded-xl bg-white/5 border border-white/10 hover:border-cyan-400/60" title="Use microphone"><i class="fa-solid fa-microphone"></i></button>
+            <button type="submit" class="btn h-11 px-5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-black font-bold mono text-[10px] tracking-wider">SEND</button>
+          </form>
+          <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 mono text-[8px] text-slate-600"><span>ENTER: SEND</span><span>MIC: VOICE INPUT</span><span>SPEAKER: VOICE OUTPUT</span><span>LOCAL: BUILT-IN COMMANDS</span></div>
+        </div>
+      </article>
     </section>
 
     <!-- RIGHT -->
@@ -456,7 +431,6 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
   let currentEmotion = localStorage.getItem('ian-emotion') || 'calm';
   let isVoiceEnabled = true, isListening = false, micAutoListen = false, micRestartTimer = null, recognition = null, telemetryChart = null;
   let currentOperator = 'Kashi';
-  let conversationHistory = loadConversationHistory();
   let userProfiles = ['Kashi','Administrator','Observer_Zero','Nexus_AI'];
 
   const $ = id => document.getElementById(id);
@@ -542,8 +516,6 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
   const emotionInfo = {
     calm: {label:'CALM', description:'Steady, attentive, and ready.'},
     happy: {label:'HAPPY', description:'Positive, upbeat, and engaged.'},
-    sad: {label:'SAD', description:'Quieter, reflective, and subdued.'},
-    angry: {label:'ANGRY', description:'Intense, frustrated, and highly alert.'},
     curious: {label:'CURIOUS', description:'Interested and eager to explore new information.'},
     focused: {label:'FOCUSED', description:'Concentrated on the current task.'},
     concerned: {label:'CONCERNED', description:'Alert and paying closer attention to potential issues.'},
@@ -626,7 +598,7 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       $('micStatus').textContent='MIC: UNSUPPORTED'; $('inputStatus').textContent='UNSUPPORTED';
-      $('micBtn').disabled=true;  return;
+      $('micBtn').disabled=true; $('consoleMicBtn').disabled=true; return;
     }
     recognition = new SpeechRecognition();
     recognition.continuous = false; recognition.interimResults = true; recognition.lang = 'en-US';
@@ -641,6 +613,7 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
         if(event.results[i].isFinal) finalText += t;
       }
       const interim = event.results[event.results.length-1]?.[0]?.transcript || '';
+      $('terminalInput').value = finalText || interim;
       if (finalText.trim()) handleCommand(finalText.trim(), true);
     };
     recognition.onerror = e => {
@@ -691,56 +664,13 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
 
   function setListening(value) {
     isListening=value;
-    $('micBtn')?.classList.toggle('mic-listening', value);
-    if ($('micIcon')) $('micIcon').className=value ? 'fa-solid fa-wave-square text-xs' : 'fa-solid fa-microphone text-xs';
-    $('micStatus').textContent=value ? 'MIC: LISTENING' : 'MIC: OFF'; if ($('inputStatus')) $('inputStatus').textContent=value ? 'LISTENING' : 'OFF';
-  }
-
-  // ---------- CONVERSATION HISTORY ----------
-  function loadConversationHistory(){
-    try { return JSON.parse(localStorage.getItem('ian-conversation-history') || '[]'); }
-    catch { return []; }
-  }
-
-  function saveConversationHistory(){
-    localStorage.setItem('ian-conversation-history', JSON.stringify(conversationHistory.slice(-200)));
-  }
-
-  function recordConversation(speaker, text){
-    conversationHistory.push({speaker, text:String(text), time:new Date().toISOString()});
-    conversationHistory = conversationHistory.slice(-200);
-    saveConversationHistory();
-  }
-
-  function renderConversationHistory(){
-    const box=$('conversationHistory');
-    if(!box) return;
-    if(!conversationHistory.length){
-      box.innerHTML='<div class="text-slate-500">[MEMORY] No conversation history has been recorded yet.</div>';
-      return;
-    }
-    box.innerHTML=conversationHistory.map(item=>{
-      const time=new Date(item.time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-      const label=item.speaker==='user'?'YOU':'ME';
-      const cls=item.speaker==='user'?'text-white':'text-cyan-300';
-      return `<div class="${cls}"><span class="text-slate-600">[${time}]</span> <b>${label}:</b> ${escapeHtml(item.text)}</div>`;
-    }).join('');
-    box.scrollTop=box.scrollHeight;
-  }
-
-  function showConversationHistory(){
-    renderConversationHistory();
-    const overlay=$('historyOverlay');
-    overlay.classList.remove('hidden'); overlay.classList.add('flex'); requestAnimationFrame(()=>overlay.classList.add('history-open'));
-  }
-
-  function hideConversationHistory(){
-    const overlay=$('historyOverlay');
-    overlay.classList.remove('history-open'); setTimeout(()=>{ overlay.classList.add('hidden'); overlay.classList.remove('flex'); }, 420);
+    $('micBtn').classList.toggle('mic-listening', value); $('consoleMicBtn').classList.toggle('mic-listening', value);
+    $('micIcon').className=value ? 'fa-solid fa-wave-square text-xs' : 'fa-solid fa-microphone text-xs';
+    $('micStatus').textContent=value ? 'MIC: LISTENING' : 'MIC: OFF'; $('inputStatus').textContent=value ? 'LISTENING' : 'OFF';
   }
 
   // ---------- COMMAND ENGINE ----------
-  async function handleTerminalInput(e) { e.preventDefault(); const input=$('terminalInput'); if(!input)return; const cmd=input.value.trim(); if(!cmd)return; input.value=''; await handleCommand(cmd,false); }
+  async function handleTerminalInput(e) { e.preventDefault(); const input=$('terminalInput'); const cmd=input.value.trim(); if(!cmd)return; input.value=''; await handleCommand(cmd,false); }
 
   async function handleCommand(cmd, fromMic=false) {
     appendTerminalLog(`> ${cmd}`, 'user');
@@ -767,17 +697,9 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
 
   async function processLocalCommand(raw) {
     const q=raw.trim().toLowerCase();
-    if(q==='clear' || q==='cls') { return {handled:true,response:'I cleared the visible command activity. Conversation history remains preserved.'}; }
+    if(q==='clear' || q==='cls') { $('terminalOutput').innerHTML=''; return {handled:true}; }
     if(q==='help' || q==='commands' || q==='help me') {
-      return {handled:true,response:'Available commands: help, status, diagnostics, weather, joke, hello, who are you, ping, expand map, normal map, expand neural, normal neural, show history, hide history, emotion, set emotion, learn, remember, recall, link neuron 1 to neuron 2, combine neuron 1 and neuron 2, voice on, voice off, mic, and clear.'};
-    }
-    if(q==='show history' || q==='conversation history' || q==='show conversation' || q==='history' || q==='show my history'){
-      showConversationHistory();
-      return {handled:true,response:'I am showing our conversation history.'};
-    }
-    if(q==='hide history' || q==='close history' || q==='hide conversation'){
-      hideConversationHistory();
-      return {handled:true,response:'I closed the conversation history.'};
+      return {handled:true,response:'Available commands: help, status, diagnostics, system, weather, joke, hello, hi, who are you, ian, ping, expand, expand map, normal map, expand neural, normal neural, neural, emotion, mood, baxter, protocol, defense, killmode, killmode on, killmode off, voice on, voice off, mic, learn, remember, what do you remember, clear.'};
     }
     if(q.startsWith('learn ') || q.startsWith('remember that ') || q.startsWith('remember ')) {
       const fact = raw.replace(/^(learn|remember)(\s+that)?\s+/i,'').trim();
@@ -790,9 +712,9 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
     if(q.startsWith('do you remember ')) {
       return {handled:true,response:recallMemory(raw.substring(16))};
     }
-    if(q.startsWith('recall ')) { return {handled:true,response:recallMemory(raw.substring(7))}; }
-    if(q.startsWith('link ') || q.startsWith('connect ')) { const m=raw.match(/^(?:link|connect)\s+(.+?)\s+(?:to|with|and)\s+(.+)$/i); if(m){ const r=linkNeurons(m[1],m[2]); return {handled:true,response:r.response}; } return {handled:true,response:'Use link neuron 1 to neuron 2, or link two memory phrases.'}; }
-    if(q.startsWith('combine ') || q.startsWith('merge ')) { const m=raw.match(/^(?:combine|merge)\s+(.+?)\s+(?:and|with|into)\s+(.+)$/i); if(m){ const r=combineNeurons(m[1],m[2]); return {handled:true,response:r.response}; } return {handled:true,response:'Use combine neuron 1 and neuron 2.'}; }
+    if(q.startsWith('recall ')) {
+      return {handled:true,response:recallMemory(raw.substring(7))};
+    }
     if(['status','diagnostics','diagnostic','system','diag'].includes(q)) return {handled:true,response:`Diagnostics nominal. Operator ${currentOperator}. Synapse load is ${$('synapseLoadVal').textContent}. Quantum coherence is 99.1 percent. Voice output is ${isVoiceEnabled?'online':'muted'}.`};
     if(q==='ping' || q==='radar' || q==='refresh radar') { pingMap(); return {handled:true}; }
     if(q==='expand' || q==='expand map' || q==='map expand') { setMapView('expanded'); return {handled:true,response:'I expanded my tactical map to full screen.'}; }
@@ -801,28 +723,7 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
     if(q==='collapse neural' || q==='close neural' || q==='normal neural' || q==='neural normal') { setNeuralMapView('normal'); return {handled:true,response:'I restored my learning map to normal view.'}; }
     if(q==='neural' || q.includes('neural map')) { inspectNeuralNode('Core AI Consciousness','Primary coordination node.'); return {handled:true}; }
     if(q==='emotion' || q==='mood' || q==='how do you feel') return {handled:true,response:`I feel ${emotionInfo[currentEmotion].label.toLowerCase()}. ${emotionInfo[currentEmotion].description}`};
-    const emotionTriggers={
-      'yay':'happy', 'nice':'happy', 'awesome':'happy',
-      'ugh':'angry', 'grr':'angry', 'rage':'angry',
-      'sigh':'sad', 'welp':'sad', 'oh well':'sad',
-      'okay':'calm', 'steady':'calm', 'breathe':'calm',
-      'hmm':'curious', 'interesting':'curious', 'why':'curious',
-      'focus':'focused', 'lock in':'focused', 'locked in':'focused',
-      'uh oh':'concerned', 'warning':'concerned', 'careful':'concerned',
-      'wow':'excited', 'lets go':'excited', "let's go":'excited'
-    };
-    const exactEmotionTriggers = emotionTriggers[q];
-    if(exactEmotionTriggers){
-      setEmotion(exactEmotionTriggers,false);
-      return {handled:true,response:`I feel ${emotionInfo[exactEmotionTriggers].label.toLowerCase()} right now.`};
-    }
-    if(q.startsWith('set emotion ' ) || q.startsWith('change emotion to ')) {
-      let requested=q.startsWith('set emotion ') ? q.substring(12).trim() : q.substring(18).trim();
-      if(emotionInfo[requested]){
-        setEmotion(requested,false);
-        return {handled:true,response:`I have changed my emotional state. I feel ${emotionInfo[requested].label.toLowerCase()} right now.`};
-      }
-    }
+    if(q.startsWith('feel ')) { const requested=q.substring(5).trim(); const match=emotionOrder.find(e=>requested.includes(e)); if(match){ setEmotion(match,false); return {handled:true,response:`I feel ${emotionInfo[match].label.toLowerCase()} right now.`}; } }
     if(q.includes('weather') || q.includes('forecast')) return {handled:true,response:'The dashboard weather module is in simulation mode. Connect a weather service to display live conditions.'};
     if(q.includes('joke') || q.includes('humor')) return {handled:true,response:'Why did the programmer bring a ladder? To reach the next level.'};
     if(q==='hello' || q==='hi' || q==='hey' || q.includes('greetings')) return {handled:true,response:`Greetings ${currentOperator}. I am online and synchronized.`};
@@ -840,119 +741,128 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
   }
 
   function appendTerminalLog(text,type='system') {
-    if(type==='user') recordConversation('user', text.replace(/^>\s*/,''));
-    if(type==='ian') recordConversation('ian', text.replace(/^\[ME\]\s*/,''));
+    const el=document.createElement('div');
+    el.textContent=text;
+    el.className=type==='ian'?'text-cyan-300':type==='user'?'text-white':type==='error'?'text-red-300':'text-cyan-300';
+    $('terminalOutput').appendChild(el); $('terminalOutput').scrollTop=$('terminalOutput').scrollHeight;
   }
 
   function pingMap(){ appendTerminalLog('[MAP] Radar beacons recalibrated and synchronized.','system'); speak('Radar sectors pinged. All dashboard tracking beacons are reporting green.'); }
-  // ---------- NEURAL MEMORY GRAPH ----------
-  function loadNeuralNeurons(){
-    try { return JSON.parse(localStorage.getItem('ian-neurons') || '[]'); } catch { return []; }
-  }
-  function saveNeuralNeurons(neurons){ localStorage.setItem('ian-neurons', JSON.stringify(neurons.slice(-150))); }
-  function neuronWords(text){ return new Set(String(text).toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(w=>w.length>3 && !['that','this','with','from','have','will','like','about','because','into','they','them','your','my','ian'].includes(w))); }
-  function neuronSimilarity(a,b){ const A=neuronWords(a), B=neuronWords(b); let shared=0; A.forEach(w=>{if(B.has(w))shared++;}); return shared; }
-  function autoLinkNeurons(neurons){
-    const links=new Set();
-    neurons.forEach(n=>(n.links||[]).forEach(id=>links.add([n.id,id].sort().join('|'))));
-    for(let i=0;i<neurons.length;i++){ for(let j=i+1;j<neurons.length;j++){
-      if(neuronSimilarity(neurons[i].text,neurons[j].text)>=1){
-        const key=[neurons[i].id,neurons[j].id].sort().join('|'); links.add(key);
-      }
-    }}
-    neurons.forEach(n=>n.links=[]);
-    links.forEach(key=>{ const [a,b]=key.split('|'); const A=neurons.find(n=>String(n.id)===a), B=neurons.find(n=>String(n.id)===b); if(A&&B){A.links.push(B.id);B.links.push(A.id);} });
-  }
-  function renderNeuralMap(){
-    const neurons=loadNeuralNeurons();
-    const nodes=$('neuralNodes'), svg=$('neuralSvg'), empty=$('neuralEmpty');
-    if(!nodes||!svg)return;
-    autoLinkNeurons(neurons);
-    saveNeuralNeurons(neurons);
-    nodes.innerHTML='';
-    svg.innerHTML='';
-    empty.classList.toggle('hidden',neurons.length>0);
-    if(!neurons.length){ $('neuralStatusInfo').textContent='NODES: 0 · LINKS: 0 · SYNC: 99.1%'; return; }
-
-    // Use one coordinate system for both SVG links and neuron centers.
-    // Keep a generous edge margin so no circle can be clipped.
-    const margin=14;
-    const radiusPct=7.5;
-    const orbit=Math.min(50-radiusPct-margin/2,50-radiusPct-margin/2);
-    const radius=neurons.length===1 ? 0 : (neurons.length<5 ? 27 : 33);
-    const orbitRadius=Math.min(radius,orbit);
-    const positions=neurons.map((n,i)=>{
-      const angle=(i/neurons.length)*Math.PI*2-Math.PI/2;
-      return {x:50+Math.cos(angle)*orbitRadius,y:50+Math.sin(angle)*orbitRadius};
-    });
-    const byId=new Map(neurons.map((n,i)=>[String(n.id),{n,p:positions[i]}]));
-
-    // Draw every connection exactly once. Lines are behind the circles.
-    const drawn=new Set();
-    neurons.forEach((n,i)=>{
-      (n.links||[]).forEach(id=>{
-        const key=[String(n.id),String(id)].sort().join('|');
-        if(drawn.has(key))return;
-        const other=byId.get(String(id));
-        if(!other)return;
-        drawn.add(key);
-        const line=document.createElementNS('http://www.w3.org/2000/svg','line');
-        line.setAttribute('x1',positions[i].x+'%');
-        line.setAttribute('y1',positions[i].y+'%');
-        line.setAttribute('x2',other.p.x+'%');
-        line.setAttribute('y2',other.p.y+'%');
-        line.setAttribute('stroke','var(--accent)');
-        line.setAttribute('stroke-width','4');
-        line.setAttribute('stroke-linecap','round');
-        line.setAttribute('opacity','1');
-        line.setAttribute('vector-effect','non-scaling-stroke');
-        line.classList.add('neural-link-line');
-        svg.appendChild(line);
-      });
-    });
-
-    // Render numbered neurons. Hovering shows exactly what each neuron represents.
-    neurons.forEach((n,i)=>{
-      const p=positions[i];
-      const el=document.createElement('button');
-      el.type='button';
-      el.className='node neural-circle absolute -translate-x-1/2 -translate-y-1/2';
-      el.style.left=p.x+'%';
-      el.style.top=p.y+'%';
-      el.dataset.neuronId=n.id;
-      el.dataset.neuronIndex=i+1;
-      const neuronName=`Neuron ${i+1}`;
-      const description=n.text || n.label || 'No description stored.';
-      el.title=`${neuronName}: ${description}`;
-      el.setAttribute('aria-label',`${neuronName}: ${description}`);
-      el.innerHTML=`<span class="neuron-number">${i+1}</span>`;
-      el.onclick=()=>inspectNeuralNeuron(n.id);
-      nodes.appendChild(el);
-    });
-    $('neuralStatusInfo').textContent=`NODES: ${neurons.length} · LINKS: ${drawn.size} · SYNC: 99.1%`;
-  }
-  function inspectNeuralNeuron(id){ const n=loadNeuralNeurons().find(x=>x.id===id); if(!n)return; appendTerminalLog(`[NEURAL] ${n.label}: ${n.text}`,'system'); triggerIanSpeech(`I remember ${n.text}.`); }
-  function resolveNeuron(ref){ const neurons=loadNeuralNeurons(); const q=String(ref).trim().toLowerCase(); const num=parseInt(q.replace(/^neuron\s*/,'').replace(/^#/,''),10); if(Number.isInteger(num)&&num>0&&num<=neurons.length)return neurons[num-1]; return neurons.find(n=>String(n.id)===q || (n.label||'').toLowerCase()===q || n.text.toLowerCase().includes(q)); }
-  function linkNeurons(aRef,bRef){ const neurons=loadNeuralNeurons(), a=resolveNeuron(aRef), b=resolveNeuron(bRef); if(!a||!b||a.id===b.id)return {ok:false,response:'I could not identify two different neurons to link.'}; a.links=a.links||[];b.links=b.links||[]; if(!a.links.includes(b.id))a.links.push(b.id);if(!b.links.includes(a.id))b.links.push(a.id);saveNeuralNeurons(neurons);renderNeuralMap();return {ok:true,response:`I linked ${a.label} with ${b.label}.`}; }
-  function combineNeurons(aRef,bRef){ const neurons=loadNeuralNeurons(), a=resolveNeuron(aRef), b=resolveNeuron(bRef); if(!a||!b||a.id===b.id)return {ok:false,response:'I could not identify two different neurons to combine.'}; const combined={id:Date.now(),label:(a.label||a.text.slice(0,24))+' + '+(b.label||b.text.slice(0,24)),text:`${a.text}; ${b.text}`,learnedBy:currentOperator,learnedAt:new Date().toISOString(),links:[...(a.links||[]),...(b.links||[])].filter(id=>id!==a.id&&id!==b.id)}; const remaining=neurons.filter(n=>n.id!==a.id&&n.id!==b.id); remaining.forEach(n=>{n.links=(n.links||[]).map(id=>id===a.id||id===b.id?combined.id:id).filter((id,x,arr)=>arr.indexOf(id)===x);}); remaining.push(combined); autoLinkNeurons(remaining);saveNeuralNeurons(remaining);renderNeuralMap();appendTerminalLog(`[NEURAL] Combined '${a.label}' and '${b.label}' into '${combined.label}'.`,'system');return {ok:true,response:`I combined ${a.label} and ${b.label} into one neuron.`}; }
-
+  function inspectNeuralNode(name,desc){ appendTerminalLog(`[NEURAL] ${name}: ${desc}`,'system'); speak(`Inspecting ${name}. ${desc}`); }
   // ---------- LEARNING / MEMORY ----------
-  function loadLearnedMemories(){ try { return JSON.parse(localStorage.getItem('ian-learned-memory') || '[]'); } catch { return []; } }
-  function saveLearnedMemories(memories){ localStorage.setItem('ian-learned-memory', JSON.stringify(memories.slice(-100))); }
-  function syncMemoriesToNeurons(){ const memories=loadLearnedMemories(), neurons=loadNeuralNeurons(); let changed=false; memories.forEach(m=>{ if(!neurons.some(n=>n.sourceMemoryId===m.id || n.text.toLowerCase()===m.text.toLowerCase())){ neurons.push({id:m.id,text:m.text,label:m.text.length>28?m.text.slice(0,28)+'…':m.text,sourceMemoryId:m.id,learnedBy:m.learnedBy,learnedAt:m.learnedAt,links:[]}); changed=true; }}); autoLinkNeurons(neurons); if(changed||neurons.length)saveNeuralNeurons(neurons); renderNeuralMap(); }
-  function learnFact(fact){ const clean=fact.trim().replace(/^that\s+/i,''); if(!clean)return {ok:false}; const memories=loadLearnedMemories(); const duplicate=memories.some(m=>m.text.toLowerCase()===clean.toLowerCase()); if(!duplicate){const entry={id:Date.now(),text:clean,learnedBy:currentOperator,learnedAt:new Date().toISOString()};memories.push(entry);saveLearnedMemories(memories);syncMemoriesToNeurons();} appendTerminalLog(`[NEURAL] ${duplicate?'Memory already known':'New memory learned'}: ${clean}`,'system'); return {ok:true,duplicate}; }
+  function loadLearnedMemories(){
+    try { return JSON.parse(localStorage.getItem('ian-learned-memory') || '[]'); }
+    catch { return []; }
+  }
+
+  function saveLearnedMemories(memories){
+    localStorage.setItem('ian-learned-memory', JSON.stringify(memories.slice(-100)));
+  }
+
+  function learnFact(fact){
+    const clean = fact.trim().replace(/^that\s+/i,'');
+    if(!clean) return {ok:false};
+    const memories = loadLearnedMemories();
+    const entry = { id: Date.now(), text: clean, learnedBy: currentOperator, learnedAt: new Date().toISOString() };
+    const duplicate = memories.some(m => m.text.toLowerCase() === clean.toLowerCase());
+    if(!duplicate) { memories.push(entry); saveLearnedMemories(memories); }
+    appendTerminalLog(`[NEURAL] ${duplicate ? 'Memory already known' : 'New memory learned'}: ${memoryStatement(entry)}`, 'system');
+    return {ok:true, duplicate};
+  }
+
+  // Translate the operator's perspective into my perspective.
+  // Examples:
+  //   "I like cars"       -> "You like cars"
+  //   "you like cars"     -> "I like cars"
+  //   "my favorite"       -> "your favorite"
+  //   "your favorite"     -> "my favorite"
+  // The stored fact remains exactly as taught; this only changes how I speak about it.
+  function swapPerspective(text){
+    let value = String(text || '').trim();
+    if(!value) return value;
+
+    const token = '__PERSPECTIVE_TOKEN__';
+    const replacements = [
+      [/\bI\s+am\b/gi, token+'AM'],
+      [/\bI'm\b/gi, token+'IM'],
+      [/\bI\s+was\b/gi, token+'WAS'],
+      [/\bI've\b/gi, token+'IVE'],
+      [/\bI\s+have\b/gi, token+'HAVE'],
+      [/\bI'd\b/gi, token+'ID'],
+      [/\bI\s+had\b/gi, token+'HAD'],
+      [/\bI'll\b/gi, token+'ILL'],
+      [/\bI\s+will\b/gi, token+'WILL'],
+      [/\bI\b/gi, token+'I'],
+      [/\bme\b/gi, token+'ME'],
+      [/\bmy\b/gi, token+'MY'],
+      [/\bmine\b/gi, token+'MINE'],
+      [/\byou\s+are\b/gi, token+'YOUARE'],
+      [/\byou're\b/gi, token+'YOURE'],
+      [/\byou\s+were\b/gi, token+'YOUWERE'],
+      [/\byou've\b/gi, token+'YOUVE'],
+      [/\byou\s+have\b/gi, token+'YOUHAVE'],
+      [/\byou'd\b/gi, token+'YOUD'],
+      [/\byou\s+had\b/gi, token+'YOUHAD'],
+      [/\byou'll\b/gi, token+'YOULL'],
+      [/\byou\s+will\b/gi, token+'YOUWILL'],
+      [/\byou\b/gi, token+'YOU'],
+      [/\byour\b/gi, token+'YOUR'],
+      [/\byours\b/gi, token+'YOURS']
+    ];
+
+    for(const [pattern,replacement] of replacements) value=value.replace(pattern,replacement);
+
+    const swaps = {
+      I: 'you', ME: 'you', MY: 'your', MINE: 'yours',
+      AM: 'are', IM: "you're", WAS: 'were', IVE: "you've", HAVE: 'have',
+      ID: "you'd", HAD: 'had', ILL: "you'll", WILL: 'will',
+      YOU: 'I', YOUR: 'my', YOURS: 'mine', YOUARE: 'I am', YOURE: "I'm",
+      YOUWERE: 'I was', YOUVE: "I've", YOUHAVE: 'I have', YOUD: "I'd",
+      YOUHAD: 'I had', YOULL: "I'll", YOUWILL: 'I will'
+    };
+
+    for(const [key,replacement] of Object.entries(swaps)){
+      value=value.replaceAll(token+key, replacement);
+    }
+
+    // Fix the most common verb agreement changes after pronoun swaps.
+    value = value
+      .replace(/^I\s+are\b/i, 'I am')
+      .replace(/^I\s+were\b/i, 'I was')
+      .replace(/^you\s+am\b/i, 'you are')
+      .replace(/^you\s+was\b/i, 'you were');
+
+    return value;
+  }
+
+  function phraseFromUserPerspective(text){
+    // Kept as a compatibility wrapper for existing memory entries.
+    // Existing entries may have been written from either perspective, so we
+    // interpret the statement as something the operator told me.
+    return swapPerspective(text);
+  }
+
+  function memoryStatement(memory){
+    return `You told me: ${phraseFromUserPerspective(memory?.text || '')}.`;
+  }
 
   function recallMemory(query){
     const q=query.trim().toLowerCase();
     const memories=loadLearnedMemories();
     if(!memories.length) return 'My local learning memory is currently empty.';
-    if(!q) return `I currently have ${memories.length} learned memory${memories.length===1?'':'ies'}.`;
+    if(!q) return `I currently have ${memories.length} learned memory${memories.length===1?'':'ies'} about what you have taught me.`;
     const matches=memories.filter(m=>m.text.toLowerCase().includes(q)).slice(-5);
     if(!matches.length) return `I do not have a learned memory matching ${query}.`;
-    return `I remember: ${matches.map(m=>m.text).join('; ')}.`;
+    return `I remember what you told me: ${matches.map(m=>phraseFromUserPerspective(m.text)).join('; ')}.`;
   }
 
-  function addNewNeuralMemory(){ const memories=loadLearnedMemories(); syncMemoriesToNeurons(); if(!memories.length){triggerIanSpeech('My learning memory is empty. Teach me something with learn followed by the information you want me to remember.');return;} const recent=memories[memories.length-1]; triggerIanSpeech(`My latest learned memory is ${recent.text}.`); }
+  function addNewNeuralMemory(){
+    const memories=loadLearnedMemories();
+    if(!memories.length){ triggerIanSpeech('My learning memory is ready. Teach me something with: learn followed by the information you want me to remember.'); return; }
+    const recent=memories[memories.length-1];
+    appendTerminalLog(`[NEURAL] Latest operator memory: ${memoryStatement(recent)}`,'system');
+    speak(`My latest learned memory is that ${phraseFromUserPerspective(recent.text)}.`);
+  }
 
   function toggleKillMode(){
     isDefenseMode=!isDefenseMode;
@@ -988,26 +898,12 @@ html:not(.dark) #terminalInput{background:rgba(255,255,255,.92)!important;color:
   }
   function startTelemetrySimulation(){ setInterval(()=>{ if(!telemetryChart)return; const d=telemetryChart.data; d.labels.shift();d.labels.push(new Date().toTimeString().slice(3,5)); const n=Math.floor(Math.random()*35)+45;d.datasets[0].data.shift();d.datasets[0].data.push(n);$('synapseLoadVal').textContent=n+'%';$('synapseBar').style.width=n+'%';telemetryChart.update('none'); },2500); }
 
-  function toast(msg){ appendTerminalLog(`[SYSTEM] ${msg}`,'system'); }
+  function toast(msg){ const t=$('toast');t.textContent=msg;t.classList.remove('hidden');clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.classList.add('hidden'),3000); }
 
   document.addEventListener('click',e=>{ if(!e.target.closest('#colorMenu') && !e.target.closest('[onclick="toggleColorMenu()"]')) $('colorMenu')?.classList.remove('open'); });
-  syncMemoriesToNeurons();
 
   // Close expanded maps with Escape.
-  document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if($('historyOverlay') && !$('historyOverlay').classList.contains('hidden')) hideConversationHistory(); if(isMapExpanded)toggleExpandMap(); if(isNeuralMapExpanded)toggleExpandNeuralMap(); } });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(isMapExpanded)toggleExpandMap(); if(isNeuralMapExpanded)toggleExpandNeuralMap(); } });
 </script>
-
-  <!-- Conversation history: hidden until requested by command -->
-  <div id="historyOverlay" class="fixed inset-0 z-[200] hidden items-center justify-center p-5 bg-black/70 backdrop-blur-md">
-    <div class="history-panel glass w-full max-w-3xl max-h-[82vh] rounded-2xl border border-white/10 p-5 flex flex-col">
-      <div class="flex items-center justify-between mb-4">
-        <div><p class="mono text-[9px] tracking-[.2em] text-cyan-400">MEMORY // CONVERSATION</p><h2 class="font-semibold text-sm">Conversation History</h2></div>
-        <button onclick="hideConversationHistory()" class="btn px-3 py-2 rounded-lg mono text-[9px]">CLOSE</button>
-      </div>
-      <div id="conversationHistory" class="terminal flex-1 min-h-[300px] max-h-[60vh] overflow-y-auto rounded-xl border border-white/10 p-4 mono text-[10px] leading-5 space-y-2"></div>
-      <div class="mt-3 mono text-[8px] text-slate-500">Say “hide history” or press ESC to close.</div>
-    </div>
-  </div>
-
 </body>
 </html>
