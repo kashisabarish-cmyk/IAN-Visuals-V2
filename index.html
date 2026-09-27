@@ -176,6 +176,14 @@ body.kill-mode:before{content:"";position:fixed;inset:0;pointer-events:none;bord
           <button class="small-btn" onclick="createProfile()">NEW</button>
         </div>
       </div>
+      <div class="metric" id="kashiVoiceMetric" style="display:none">
+        <div class="metric-head"><span>TTS VOICE • KASHI ONLY</span></div>
+        <div style="display:flex;gap:6px;margin-top:7px">
+          <select id="ttsVoiceSelect" style="flex:1;background:#03090d;border:1px solid var(--line);color:var(--text);padding:7px;font-size:10px"></select>
+          <button class="small-btn" onclick="applySelectedVoice()">APPLY</button>
+        </div>
+        <div style="font-size:8px;color:var(--muted);margin-top:6px">Male voices only • saved to Kashi's profile</div>
+      </div>
       <div class="metric">
         <div class="metric-head"><span>APPEARANCE</span></div>
         <div class="quick-row" style="justify-content:flex-start;margin-top:7px">
@@ -259,6 +267,8 @@ let lastQuestion = null;
 let pendingNeuron = null;
 let lastGrowthTime = 0;
 let voiceEnabled = true;
+let selectedVoiceName = localStorage.getItem("ian-kashi-tts-voice") || "";
+let availableMaleVoices = [];
 let micAutoListen = false;
 let recognition = null;
 let mapExpanded = false;
@@ -472,6 +482,7 @@ function canonicalCommand(raw){
     [/^(voice|voice status|tts|text to speech|text-to-speech|speech)$/, "voice status"],
     [/^(voice on|turn voice on|enable voice|enable tts|enable text to speech|start voice|speak)$/, "voice on"],
     [/^(voice off|turn voice off|disable voice|disable tts|disable text to speech|stop voice|mute voice|silent mode)$/, "voice off"],
+    [/^(change voice|change tts voice|change tts|choose voice|select voice|voice picker|tts voice|tts voices|voice options)$/, "tts voice"],
 
     // Microphone
     [/^(mic|microphone|mic status|microphone status|listening|listening status)$/, "mic status"],
@@ -528,6 +539,7 @@ function canonicalCommand(raw){
     "map.reset":"map reset", "neural.expand":"expand neural map",
     "neural.collapse":"collapse neural map",
     "voice.on":"voice on", "voice.off":"voice off", "voice.status":"voice status",
+    "voice.select":"tts voice", "voice.picker":"tts voice", "tts.voice":"tts voice",
     "mic.on":"mic on", "mic.off":"mic off", "mic.status":"mic status",
     "theme.blue":"theme blue", "theme.green":"theme green",
     "theme.amber":"theme amber", "theme.white":"theme white",
@@ -584,7 +596,8 @@ function aiResponse(raw){
   if(m==="show network"||m==="show brain map"||m==="expand neural map"){if(m==="expand neural map")toggleMap(true);return `I have ${neurons.length} neural concepts loaded.`}
   if(m==="collapse neural map"){toggleMap(false);return "Neural map collapsed."}
   if(m==="show learned"){openLearned();return `I have ${Object.keys(userProfile.learned_topics||{}).length} learned topic(s) in your profile.`}
-  if(m==="voice status")return `Voice output is ${voiceEnabled?"enabled":"disabled"}. Browser TTS is ${("speechSynthesis" in window)?"available":"unavailable"}.`;
+  if(m==="voice status")return `Voice output is ${voiceEnabled?"enabled":"disabled"}. Browser TTS is ${("speechSynthesis" in window)?"available":"unavailable"}. ${currentOperator==="Kashi"&&selectedVoiceName?`Selected male voice: ${selectedVoiceName}.`:""}`;
+  if(m==="tts voice")return openTTSVoicePicker();
   if(m==="mic status")return `Microphone mode is ${micAutoListen?"listening":"standby"}. Speech recognition is ${recognition?"available":"unavailable"}.`;
   if(m==="map reset"){resetMapView();return "Neural map view reset.";}
   if(m==="theme blue"||m==="theme green"||m==="theme amber"||m==="theme white"){
@@ -758,7 +771,7 @@ function renderUserProfiles(){
 }
 function switchProfile(name){
   if(!name)return;
-  currentOperator=name;userProfile=getOrCreateUser(name);localStorage.setItem(STORAGE.operator,name);renderUserProfiles();toast(`Profile switched to ${name}.`);
+  currentOperator=name;userProfile=getOrCreateUser(name);localStorage.setItem(STORAGE.operator,name);renderUserProfiles();populateTTSVoiceOptions();toast(`Profile switched to ${name}.`);
 }
 function createProfile(){
   const name=prompt("New I.A.N. operator profile name:");
@@ -767,18 +780,45 @@ function createProfile(){
 }
 
 /* ------------------ Voice / microphone ------------------ */
+function getMaleVoices(){
+  if(!("speechSynthesis" in window))return [];
+  const voices=speechSynthesis.getVoices();
+  const maleHints=["male","david","daniel","alex","fred","george","mark","guy","google uk english male","google us english male","microsoft david","microsoft mark","microsoft guy","microsoft ryan","microsoft andrew"];
+  return voices.filter(v=>maleHints.some(h=>(v.name||"").toLowerCase().includes(h)));
+}
 function chooseVoice(){
   if(!("speechSynthesis" in window))return null;
-  const voices=speechSynthesis.getVoices();
-  const maleHints=["male","david","daniel","alex","fred","george","mark","guy","google uk english male"];
-  return voices.find(v=>maleHints.some(h=>v.name.toLowerCase().includes(h)))||voices.find(v=>v.lang?.startsWith("en"))||voices[0]||null;
+  const maleVoices=getMaleVoices(); availableMaleVoices=maleVoices;
+  if(currentOperator==="Kashi" && selectedVoiceName){const selected=maleVoices.find(v=>v.name===selectedVoiceName);if(selected)return selected;}
+  return maleVoices[0]||null;
+}
+function populateTTSVoiceOptions(){
+  const metric=$("kashiVoiceMetric"),select=$("ttsVoiceSelect"); if(!metric||!select)return;
+  const isKashi=currentOperator==="Kashi"; metric.style.display=isKashi?"block":"none"; if(!isKashi)return;
+  const voices=getMaleVoices(); availableMaleVoices=voices; select.innerHTML="";
+  if(!voices.length){const opt=document.createElement("option");opt.value="";opt.textContent="No male browser voices detected";select.appendChild(opt);select.disabled=true;return;}
+  select.disabled=false;
+  voices.forEach(v=>{const opt=document.createElement("option");opt.value=v.name;opt.textContent=`${v.name}${v.lang?" • "+v.lang:""}`;select.appendChild(opt);});
+  if(!voices.some(v=>v.name===selectedVoiceName))selectedVoiceName=voices[0].name;
+  select.value=selectedVoiceName;
+}
+function applySelectedVoice(){
+  if(currentOperator!=="Kashi"){toast("TTS voice selection is restricted to the Kashi profile.");return;}
+  const select=$("ttsVoiceSelect"); if(!select||!select.value){toast("No male browser voice is currently available.");return;}
+  selectedVoiceName=select.value; localStorage.setItem("ian-kashi-tts-voice",selectedVoiceName);
+  toast(`TTS voice set to ${selectedVoiceName}.`); speak(`Voice selected: ${selectedVoiceName}.`); renderAll();
+}
+function openTTSVoicePicker(){
+  if(currentOperator!=="Kashi")return "The custom TTS voice selector is available only to Kashi.";
+  populateTTSVoiceOptions(); const select=$("ttsVoiceSelect"); if(select)select.focus();
+  return "Opening the Kashi-only TTS voice selector.";
 }
 function speak(text){
   if(!voiceEnabled||!("speechSynthesis" in window))return;
-  speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);const v=chooseVoice();
-  if(v)u.voice=v;u.lang="en-US";u.rate=.96;u.pitch=.85;u.volume=1;speechSynthesis.speak(u);
+  speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text); const v=chooseVoice();
+  if(v)u.voice=v; u.lang="en-US"; u.rate=.96; u.pitch=.85; u.volume=1; speechSynthesis.speak(u);
 }
-if("speechSynthesis" in window)speechSynthesis.onvoiceschanged=()=>{};
+if("speechSynthesis" in window)speechSynthesis.onvoiceschanged=()=>{populateTTSVoiceOptions();renderAll();};
 
 function setupRecognition(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -859,7 +899,7 @@ function drawTelemetry(){
   telemetry.forEach((v,i)=>{const px=i*(r.width/(telemetry.length-1)),py=r.height-10-v/100*(r.height-20);i?x.lineTo(px,py):x.moveTo(px,py)});x.stroke();
 }
 function renderResponse(text){$("responseLine").textContent=text}
-function renderAll(){renderUserProfiles();renderEmotion();renderDefense();renderTelemetry();drawTelemetry();drawMap();$("voiceState").textContent=voiceEnabled?"MALE / ON":"OFF"}
+function renderAll(){renderUserProfiles();renderEmotion();renderDefense();renderTelemetry();drawTelemetry();drawMap();$("voiceState").textContent=voiceEnabled?"MALE / ON":"OFF";populateTTSVoiceOptions();}
 function startTelemetry(){clearInterval(telemetryTimer);telemetryTimer=setInterval(()=>{telemetry.push(Math.max(8,Math.min(96,28+Math.random()*42+(baxterActive?15:0)+(killMode?20:0))));telemetry.shift();renderTelemetry();drawTelemetry()},2500)}
 
 /* ------------------ Appearance ------------------ */
@@ -907,6 +947,7 @@ const COMMANDS=[
  ["voice on / voice.on","Enable browser TTS."],
  ["voice off / voice.off","Disable browser TTS."],
  ["voice / voice.status","Report TTS status."],
+ ["change voice / tts.voice / voice picker","Open male TTS voice selection — Kashi profile only."],
  ["mic on / mic.on / always listening","Enable always-listening speech recognition."],
  ["mic off / mic.off / stop listening","Disable microphone listening."],
  ["mic / mic.status","Report microphone status."],
