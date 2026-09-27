@@ -431,8 +431,119 @@ function solveMath(message){
 }
 
 /* ------------------ Core command engine ------------------ */
+function canonicalCommand(raw){
+  let s = normalize(raw);
+  s = s.replace(/[!?.,;:]+$/g,"").trim();
+  s = s.replace(/\s+/g," ");
+
+  const aliases = [
+    // Core/system
+    [/^(help|help me|what can you do|what commands do you know|list commands|show commands|command list|cmds|commands?)$/, "help"],
+    [/^(status|status check|system status|check status|check system|system check|sys status|syscheck|stat)$/, "status"],
+    [/^(diagnostics?|diagnostic check|run diagnostics?|run diagnostic|diagnostic scan|diag|diag check|self test|self-test|system diagnostics?)$/, "diagnostics"],
+    [/^(system|sys|system info|system information|about system)$/, "system"],
+    [/^(ian|i\.a\.n\.|wake up|wake ian|wake i\.a\.n\.|are you there|you there)$/, "ian"],
+    [/^(who am i|whoami|identify me|identify operator|current user|current operator|operator)$/, "who am i"],
+    [/^(who are you|whoareyou|what are you|what is ian|what is i\.a\.n\.|identity|identify yourself|introduce yourself)$/, "who are you"],
+
+    // History/context
+    [/^(history|show history|open history|view history|conversation history|show conversation history|open conversation history|previous messages|show previous messages|show past messages|past conversations|recent conversation|recent history|show context|view context|recall conversation|recall history)$/, "show history"],
+    [/^(what did we talk about|what have we talked about|what were we talking about|what did we discuss|what have we discussed|remember our conversation|remember our conversations)$/, "what did we talk about"],
+    [/^(clear history|clear conversation history|delete history|erase history|wipe history|forget conversation|forget our conversation|reset conversation)$/, "wipe conversation"],
+
+    // Neural map
+    [/^(network|neural network|neural map|brain map|show network|show neural network|show neural map|show brain|show brain map|view network|view neural map)$/, "show network"],
+    [/^(expand|expand map|expand neural map|open neural map|fullscreen map|full screen map|maximize map|maximize neural map|map fullscreen)$/, "expand neural map"],
+    [/^(collapse|collapse map|collapse neural map|close neural map|minimize map|restore map|exit map fullscreen)$/, "collapse neural map"],
+    [/^(fit map|fit neural map|center map|center neural map|reset map|reset neural map)$/, "map reset"],
+
+    // Learning/memory
+    [/^(learned|learned knowledge|show learned|show learning|view learned|view memories|show memories|learned memories|memory list|show memory)$/, "show learned"],
+    [/^(recall learned|recall memory|recall memories|open learned|open memories)$/, "recall learned"],
+    [/^(what do you remember|what have you learned|what have i taught you|show what you know)$/, "show learned"],
+    [/^(wipe all memory|wipe memory|erase all memory|erase memory|clear all memory|clear memory|forget everything|forget all|factory reset memory|reset memory)$/, "wipe all memory"],
+
+    // Emotion
+    [/^(mood|emotion|emotions|current mood|your mood|what is your mood|whats your mood|how are you feeling|how do you feel|how are you|feeling)$/, "what is your mood"],
+    [/^(how do you feel about life|how do you feel about living|what do you think about life|your view on life|life)$/, "feel about life"],
+    [/^(how do you feel about me|what do you think about me|what do you think of me|your opinion of me|relationship with me)$/, "feel about me"],
+
+    // Voice
+    [/^(voice|voice status|tts|text to speech|text-to-speech|speech)$/, "voice status"],
+    [/^(voice on|turn voice on|enable voice|enable tts|enable text to speech|start voice|speak)$/, "voice on"],
+    [/^(voice off|turn voice off|disable voice|disable tts|disable text to speech|stop voice|mute voice|silent mode)$/, "voice off"],
+
+    // Microphone
+    [/^(mic|microphone|mic status|microphone status|listening|listening status)$/, "mic status"],
+    [/^(mic on|microphone on|turn mic on|turn microphone on|enable mic|enable microphone|start listening|always listening|listen|listen mode|continuous listening)$/, "mic on"],
+    [/^(mic off|microphone off|turn mic off|turn microphone off|disable mic|disable microphone|stop listening|stop microphone|stop mic)$/, "mic off"],
+
+    // Appearance
+    [/^(dark|dark mode|enable dark mode|turn on dark mode|night mode)$/, "dark mode"],
+    [/^(light|light mode|enable light mode|turn on light mode)$/, "light mode"],
+    [/^(blue theme|blue mode|set theme blue|theme blue)$/, "theme blue"],
+    [/^(green theme|green mode|set theme green|theme green)$/, "theme green"],
+    [/^(amber theme|amber mode|orange theme|set theme amber|theme amber)$/, "theme amber"],
+    [/^(white theme|white mode|set theme white|theme white|monochrome white)$/, "theme white"],
+
+    // Profiles
+    [/^(switch user|change user|change operator|switch operator|change profile|switch profile|user profile|operator profile)$/, "switch user"],
+    [/^(new user|new profile|create user|create profile|add user|add profile)$/, "new profile"],
+    [/^(what do i like|what are my likes|my likes|what do i enjoy|what do i enjoy doing)$/, "what do i like"],
+    [/^(what do i dislike|what are my dislikes|my dislikes|what don't i like|what do i hate)$/, "what do i dislike"],
+
+    // BAXTER / defense simulation
+    [/^(activate baxter|activate baxter protocol|baxter on|baxter activate|start baxter|enable baxter)$/, "activate baxter protocol"],
+    [/^(deactivate baxter|deactivate baxter protocol|baxter off|baxter deactivate|stop baxter|disable baxter)$/, "deactivate baxter protocol"],
+    [/^(stark|stark systems|stark mode|startup|startup sequence|run startup|boot sequence|system startup)$/, "stark systems"],
+    [/^(defense|defense mode|activate defense|defense on|the world needs fixing|the world needs saving|world needs fixing|code red)$/, "the world needs fixing"],
+    [/^(stand down|defense off|defense mode off|kill mode off|exit defense|deactivate defense|normal mode)$/, "stand down"],
+    [/^(kill on sight|kos|kos mode|turn on kill on sight|enable kos)$/, "kill on sight"],
+
+    // Utility / conversational short forms
+    [/^(ping|ping ian|test connection|connection test)$/, "ping"],
+    [/^(time|what time is it|current time|tell me the time)$/, "time"],
+    [/^(date|what date is it|today|current date)$/, "date"],
+    [/^(thanks|thank you|thx|ty|appreciate it|i appreciate you)$/, "thanks"],
+    [/^(bye|goodbye|see you|later|shutting down|good night)$/, "bye"],
+    [/^(hello|hi|hey|yo|sup|what's up|whats up)$/, "hello"],
+  ];
+
+  for (const [pattern, canonical] of aliases) {
+    if (pattern.test(s)) return canonical;
+  }
+
+  // Compact/operator syntax:
+  // status(), diagnostics(), history(), map.expand(), map.collapse(),
+  // memory.show(), memory.clear(), voice.on(), mic.on(), etc.
+  const compact = s.replace(/\(\)$/,"");
+  const compactMap = {
+    "status":"status", "status.check":"status", "sys.status":"status",
+    "diagnostics":"diagnostics", "diagnostic":"diagnostics", "diag":"diagnostics",
+    "history":"show history", "history.show":"show history", "conversation.history":"show history",
+    "history.clear":"wipe conversation", "memory.show":"show learned",
+    "memory.recall":"recall learned", "memory.clear":"wipe all memory",
+    "network.show":"show network", "map.show":"show network",
+    "map.expand":"expand neural map", "map.collapse":"collapse neural map",
+    "map.reset":"map reset", "neural.expand":"expand neural map",
+    "neural.collapse":"collapse neural map",
+    "voice.on":"voice on", "voice.off":"voice off", "voice.status":"voice status",
+    "mic.on":"mic on", "mic.off":"mic off", "mic.status":"mic status",
+    "theme.blue":"theme blue", "theme.green":"theme green",
+    "theme.amber":"theme amber", "theme.white":"theme white",
+    "theme.dark":"dark mode", "theme.light":"light mode",
+    "profile.switch":"switch user", "profile.new":"new profile",
+    "baxter.on":"activate baxter protocol", "baxter.off":"deactivate baxter protocol",
+    "defense.on":"the world needs fixing", "defense.off":"stand down",
+    "kos.on":"kill on sight", "help()":"help", "commands":"help",
+    "ian.status":"status", "ian.help":"help", "ian.diagnostics":"diagnostics"
+  };
+  return compactMap[compact] || s;
+}
+
 function aiResponse(raw){
-  const message=raw.trim(),m=normalize(message);
+  const message=raw.trim(),m=canonicalCommand(message);
+  updateEmotion(message);
   updateEmotion(message);
 
   if(pendingNeuron){
@@ -473,6 +584,19 @@ function aiResponse(raw){
   if(m==="show network"||m==="show brain map"||m==="expand neural map"){if(m==="expand neural map")toggleMap(true);return `I have ${neurons.length} neural concepts loaded.`}
   if(m==="collapse neural map"){toggleMap(false);return "Neural map collapsed."}
   if(m==="show learned"){openLearned();return `I have ${Object.keys(userProfile.learned_topics||{}).length} learned topic(s) in your profile.`}
+  if(m==="voice status")return `Voice output is ${voiceEnabled?"enabled":"disabled"}. Browser TTS is ${("speechSynthesis" in window)?"available":"unavailable"}.`;
+  if(m==="mic status")return `Microphone mode is ${micAutoListen?"listening":"standby"}. Speech recognition is ${recognition?"available":"unavailable"}.`;
+  if(m==="map reset"){resetMapView();return "Neural map view reset.";}
+  if(m==="theme blue"||m==="theme green"||m==="theme amber"||m==="theme white"){
+    const theme=m.split(" ")[1];setTheme(theme);return `${theme.charAt(0).toUpperCase()+theme.slice(1)} monochrome theme enabled.`;
+  }
+  if(m==="new profile"){createProfile();return "New profile workflow opened.";}
+  if(m==="ping")return "Pong. I.A.N. local command engine is responding.";
+  if(m==="time")return `The current browser time is ${new Date().toLocaleTimeString()}.`;
+  if(m==="date")return `The current browser date is ${new Date().toLocaleDateString()}.`;
+  if(m==="hello")return ["Hello.","Hey. Systems are ready.","Hello, operator."][Math.floor(Math.random()*3)];
+  if(m==="thanks")return "You're welcome.";
+  if(m==="bye")return "I'll remain online in the browser. See you later.";
   if(m==="status"||m==="system")return statusText();
   if(m==="diagnostics"||m==="diagnostic")return diagnosticsText();
   if(m==="help"||m==="commands")return "Opening the command index.";
@@ -489,6 +613,30 @@ function aiResponse(raw){
 
   if(m==="wipe conversation"){wipeConversation();return "Conversation history and session context wiped. Your profile and learned knowledge remain."}
   if(m==="wipe all memory"){wipeAllMemory();return "Full memory wipe complete. Your profile remains."}
+
+  // Natural-language parameterized commands.
+  if(/^(teach me|teach you|learn about|learn that|learn this)\b/i.test(message)){
+    const body=message.replace(/^(teach me|teach you|learn about|learn that|learn this)\s*/i,"").trim();
+    const parts=body.split(/\s*[:=-]\s*/,2);
+    if(parts.length===2){
+      const topic=parts[0].trim(), explanation=parts[1].trim();
+      addNeuron(topic,explanation);userProfile.learned_topics[topic.toLowerCase()]=explanation;save(STORAGE.users,users);
+      const r=learnFact(`${topic}: ${explanation}`);
+      return r.duplicate?`I already knew '${topic}'.`:`Learned '${topic}' = ${explanation}.`;
+    }
+    return "To teach me, use: learn <topic>: <explanation>.";
+  }
+  if(/^(remember that|remember this|don't forget|dont forget|keep in mind)\b/i.test(message)){
+    const fact=message.replace(/^(remember that|remember this|don't forget|dont forget|keep in mind)\s*/i,"").trim();
+    const r=learnFact(fact);
+    return r.ok?(r.duplicate?"I already had that memory.":"I'll remember that."):"Tell me what you'd like me to remember.";
+  }
+  if(/^(switch to|change to|use profile|use user|be)\s+/i.test(message)){
+    const name=message.replace(/^(switch to|change to|use profile|use user|be)\s+/i,"").trim();
+    if(name){switchProfile(name);return `Switched to ${name}.`;}
+  }
+  if(/^(show|open|view|expand)\s+(the\s+)?neural\s+(map|network|graph)$/i.test(message)){toggleMap(true);return `I have ${neurons.length} neural concepts loaded.`;}
+  if(/^(close|hide|collapse)\s+(the\s+)?neural\s+(map|network|graph)$/i.test(message)){toggleMap(false);return "Neural map collapsed.";}
 
   if(m.startsWith("combine ")){
     const parts=message.slice(8).split(/\s+and\s+/i);return parts.length===2?combineNeurons(parts[0].trim(),parts[1].trim()):"Usage: combine <topic1> and <topic2>";
@@ -720,46 +868,71 @@ function toggleDark(){document.body.classList.toggle("light");const light=docume
 
 /* ------------------ Commands shown in index ------------------ */
 const COMMANDS=[
- ["help / commands","Open the complete command index."],
- ["status","Show current I.A.N. status, profile, memory, voice and mic state."],
- ["diagnostics","Run a browser-side system diagnostic."],
- ["system","Alias for status."],
- ["ian","Wake-word response."],
- ["who am i","Identify the active operator."],
- ["who are you","Show I.A.N. identity and core values."],
- ["what is your mood","Report current mood and anger level."],
- ["feel about life","Report I.A.N.'s life-interest state."],
- ["feel about me","Report I.A.N.'s operator relationship state."],
- ["show history","Open persistent conversation history. Hidden otherwise."],
- ["what did we talk about","Open conversation history."],
- ["show context","Alias for conversation history."],
- ["show network","Report loaded neural concepts."],
- ["expand neural map","Expand the interactive neural map."],
- ["collapse neural map","Collapse the neural map."],
- ["show learned","Open learned knowledge."],
+ ["help / commands / cmds / ian.help","Open the complete command index."],
+ ["status / stat / sys.status / status()","Show current I.A.N. status."],
+ ["diagnostics / diag / diag() / self-test","Run a browser-side system diagnostic."],
+ ["system / sys","Alias for status."],
+ ["ian / i.a.n. / wake up","Wake-word response."],
+ ["who am i / whoami","Identify the active operator."],
+ ["who are you / whoareyou / identity","Show I.A.N. identity."],
+
+ ["show history / history / history.show / conversation.history","Open persistent conversation history. Hidden otherwise."],
+ ["what did we talk about / what have we discussed","Open conversation history."],
+ ["clear history / history.clear / reset conversation","Erase conversation history and timeline."],
+
+ ["show network / neural map / network.show / map.show","Report loaded neural concepts."],
+ ["expand neural map / map.expand / neural.expand","Expand the interactive neural map."],
+ ["collapse neural map / map.collapse / neural.collapse","Collapse the neural map."],
+ ["map reset / map.reset / reset map","Reset the neural map view."],
+
+ ["show learned / memory.show / learned knowledge","Open learned knowledge."],
  ["learn <topic>: <explanation>","Teach a topic and create a neuron."],
- ["remember <fact>","Store a persistent learned memory."],
- ["recall learned","Open persistent learned knowledge."],
+ ["teach me <topic>: <explanation>","Natural-language learning form."],
+ ["remember <fact> / remember that <fact>","Store a persistent learned memory."],
+ ["recall learned / memory.recall","Open persistent learned knowledge."],
  ["do you remember <keyword>","Search conversation and memory."],
  ["combine <topic1> and <topic2>","Create a combined concept."],
  ["link <topic1> and <topic2>","Connect two neurons."],
- ["switch user <name>","Switch/create an operator profile."],
- ["switch user","Open/create a profile."],
+ ["wipe all memory / memory.clear","Erase neurons, history and timeline; keep profile."],
+
+ ["switch user <name> / switch to <name> / profile.switch","Switch/create an operator profile."],
+ ["switch user / profile.new","Open/create a profile."],
  ["what do i like","Show profile likes."],
  ["what do i dislike","Show profile dislikes."],
- ["wipe conversation","Erase conversation history and timeline."],
- ["wipe all memory","Erase neurons, history and timeline; keep profile."],
- ["activate baxter protocol","Activate BAXTER diagnostics state."],
- ["deactivate baxter protocol","Deactivate BAXTER."],
- ["stark systems","Run a startup/system-check simulation."],
- ["voice on / voice off","Toggle browser TTS."],
- ["mic / mic on","Enable always-listening speech recognition."],
- ["mic off / stop listening","Disable microphone listening."],
- ["dark mode / light mode","Change display mode."],
- ["the world needs fixing","Enter defense simulation mode; visual only."],
- ["stand down / defense off","Leave defense simulation mode."],
- ["kill on sight","Toggle a visual KOS simulation flag; no real-world action."],
- ["Math","Arithmetic, percentages, roots, powers, area, volume, slope, averages, etc."]
+
+ ["what is your mood / mood / emotion","Report current mood and anger level."],
+ ["feel about life","Report I.A.N.'s life-interest state."],
+ ["feel about me","Report I.A.N.'s operator relationship state."],
+
+ ["voice on / voice.on","Enable browser TTS."],
+ ["voice off / voice.off","Disable browser TTS."],
+ ["voice / voice.status","Report TTS status."],
+ ["mic on / mic.on / always listening","Enable always-listening speech recognition."],
+ ["mic off / mic.off / stop listening","Disable microphone listening."],
+ ["mic / mic.status","Report microphone status."],
+
+ ["dark mode / theme.dark","Enable dark display."],
+ ["light mode / theme.light","Enable light display."],
+ ["theme blue / theme.blue","Use blue monochrome."],
+ ["theme green / theme.green","Use green monochrome."],
+ ["theme amber / theme.amber","Use amber monochrome."],
+ ["theme white / theme.white","Use white monochrome."],
+
+ ["activate baxter protocol / baxter.on","Activate BAXTER diagnostics state."],
+ ["deactivate baxter protocol / baxter.off","Deactivate BAXTER."],
+ ["stark systems / startup sequence","Run startup/system-check simulation."],
+ ["the world needs fixing / defense.on","Enter defense simulation mode; visual only."],
+ ["stand down / defense.off","Leave defense simulation mode."],
+ ["kill on sight / kos.on","Toggle a visual KOS simulation flag; no real-world action."],
+
+ ["ping / ping ian","Test the local command engine."],
+ ["time / current time","Report browser time."],
+ ["date / current date","Report browser date."],
+ ["hello / hi / hey","Greeting."],
+ ["thanks / thank you","Acknowledgement."],
+ ["bye / goodbye","Goodbye response."],
+
+ ["Math / 2+2 / sqrt(25) / 10% of 80","Arithmetic and supported math expressions."]
 ];
 function renderCommandRef(){$("commandRef").innerHTML=COMMANDS.map(([a,b])=>`<div><code>${escapeHtml(a)}</code><br><span>${escapeHtml(b)}</span></div>`).join("")}
 
