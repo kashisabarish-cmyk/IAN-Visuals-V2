@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>I.A.N. // Intelligent Autonomous Network</title>
+<style>
+:root{
+  --bg:#02070b; --panel:#071018; --panel2:#0a151e; --line:#17303d;
+  --accent:#18aee8; --accent2:#65d9ff; --text:#d8f5ff; --muted:#7192a0;
+  --good:#63e6a8; --warn:#ffd166; --danger:#ff334f; --shadow:rgba(24,174,232,.22);
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input{font:inherit}
+button{cursor:pointer}
+body.light{--bg:#eef5f8;--panel:#f6fbfd;--panel2:#e7f0f4;--line:#b8cbd4;--text:#102d3a;--muted:#54717e;--shadow:rgba(24,140,190,.16)}
+body.light .panel{background:linear-gradient(145deg,rgba(246,251,253,.98),rgba(231,240,244,.98));box-shadow:0 0 24px rgba(20,50,65,.10),inset 0 0 24px rgba(20,50,65,.035)}
+body.light .small-btn,body.light .icon-btn{background:#e7f0f4;color:#126080}
+body.light .command-row input{background:#f9fcfd;color:#102d3a}
+body.light .send{background:rgba(24,174,232,.12)}
+body.light .quick-row button{color:#456574}
+body.light .modal-card{background:#f6fbfd}
+body.light .toast{background:#f6fbfd;color:#102d3a}
+body.light .history-item,body.light .metric,body.light .core-chip{background:rgba(10,50,70,.035)}
+body.kill-mode{--accent:#ff334f;--accent2:#ff8898;--shadow:rgba(255,51,79,.30);--line:#42131c}
+body.kill-mode:before{content:"";position:fixed;inset:0;pointer-events:none;border:2px solid var(--danger);box-shadow:inset 0 0 50px rgba(255,0,30,.15);z-index:50}
+
+.app{height:100%;display:grid;grid-template-columns:minmax(280px,1.15fr) minmax(420px,1.7fr) minmax(300px,1fr);gap:10px;padding:10px}
+.panel{min-width:0;min-height:0;background:linear-gradient(145deg,rgba(10,21,30,.97),rgba(3,9,13,.97));
+ border:1px solid var(--line);box-shadow:0 0 28px rgba(0,0,0,.35),inset 0 0 30px rgba(0,0,0,.22);position:relative;overflow:hidden}
+.panel:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(transparent 49%,rgba(255,255,255,.018) 50%,transparent 51%);background-size:100% 4px;opacity:.25}
+.panel-header{height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 15px;border-bottom:1px solid var(--line);position:relative;z-index:2}
+.panel-title{font-size:11px;letter-spacing:.22em;color:var(--accent2);font-weight:800}
+.panel-sub{font-size:9px;color:var(--muted);letter-spacing:.13em}
+.small-btn,.icon-btn{border:1px solid var(--line);background:#07121a;color:var(--accent2);padding:7px 9px;border-radius:4px;font-size:10px;letter-spacing:.08em}
+.small-btn:hover,.icon-btn:hover{border-color:var(--accent);box-shadow:0 0 12px var(--shadow)}
+.status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 10px var(--good);margin-right:7px}
+.status-dot.warn{background:var(--warn);box-shadow:0 0 10px var(--warn)}
+.status-dot.red{background:var(--danger);box-shadow:0 0 10px var(--danger)}
+
+.left,.right{display:flex;flex-direction:column}
+.map-wrap{position:relative;flex:1;min-height:0}
+#neuralCanvas{width:100%;height:100%;display:block;background:radial-gradient(circle at 50% 45%,rgba(24,174,232,.07),transparent 48%)}
+.map-controls{position:absolute;top:10px;right:10px;display:flex;gap:5px;z-index:4}
+.map-fullscreen{position:fixed!important;inset:10px;z-index:100;box-shadow:0 0 60px #000}
+.map-fullscreen #neuralCanvas{height:calc(100vh - 75px)}
+.map-help{position:absolute;bottom:9px;left:12px;right:12px;color:var(--muted);font-size:9px;letter-spacing:.05em;pointer-events:none}
+.map-node-info{position:absolute;left:12px;top:72px;max-width:230px;padding:9px;background:rgba(2,7,11,.9);border:1px solid var(--line);font-size:10px;display:none;z-index:3}
+
+.center{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;position:relative}
+.center-top{position:absolute;top:13px;left:16px;right:16px;display:flex;justify-content:space-between;align-items:center;z-index:3}
+.brand{font-size:10px;letter-spacing:.25em;color:var(--muted)}
+.operator{font-size:10px;color:var(--accent2);letter-spacing:.12em}
+.orb-zone{width:min(440px,78%);aspect-ratio:1;display:flex;align-items:center;justify-content:center;position:relative}
+.orb-ring{position:absolute;border:1px solid var(--accent);border-radius:50%;opacity:.42;animation:spin 18s linear infinite}
+.r1{inset:4%;border-style:dashed}.r2{inset:12%;animation-direction:reverse;animation-duration:13s}.r3{inset:22%;opacity:.25}
+.orb{width:46%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 38% 35%,#d9fbff 0 2%,var(--accent2) 3%,var(--accent) 24%,rgba(24,174,232,.18) 55%,transparent 72%);
+ box-shadow:0 0 25px var(--accent),0 0 75px var(--shadow),inset 0 0 30px rgba(255,255,255,.22);animation:pulse 2.6s ease-in-out infinite;position:relative}
+.orb:before,.orb:after{content:"";position:absolute;inset:-14%;border:1px solid var(--accent);border-radius:50%;opacity:.25}
+.orb:after{inset:-26%;opacity:.12}
+@keyframes pulse{50%{transform:scale(1.05);filter:brightness(1.25)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ian-label{position:absolute;bottom:19%;font-weight:900;font-size:clamp(25px,4vw,44px);letter-spacing:.25em;text-shadow:0 0 18px var(--accent)}
+.emotion-line{margin-top:-5px;text-align:center;font-size:11px;letter-spacing:.14em;color:var(--accent2)}
+.response-line{min-height:25px;max-width:560px;text-align:center;color:var(--muted);font-size:12px;margin:14px 0 18px}
+.command-row{width:min(650px,100%);display:flex;gap:8px}
+.command-row input{flex:1;background:#03090d;border:1px solid var(--line);color:var(--text);padding:13px 14px;outline:none;border-radius:3px}
+.command-row input:focus{border-color:var(--accent);box-shadow:0 0 18px var(--shadow)}
+.send{min-width:80px;border:1px solid var(--accent);background:rgba(24,174,232,.08);color:var(--accent2);font-weight:800;letter-spacing:.12em}
+.quick-row{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:9px;max-width:650px}
+.quick-row button{border:1px solid var(--line);background:transparent;color:var(--muted);padding:6px 9px;font-size:9px;border-radius:3px}
+.quick-row button:hover{color:var(--accent2);border-color:var(--accent)}
+.core-status{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:min(650px,100%);margin-top:16px}
+.core-chip{border:1px solid var(--line);padding:8px;text-align:center;background:rgba(255,255,255,.015)}
+.core-chip b{display:block;font-size:9px;letter-spacing:.13em;color:var(--muted);margin-bottom:4px}.core-chip span{font-size:10px;color:var(--accent2)}
+
+.right-body{flex:1;overflow:auto;padding:11px}
+.telemetry{height:145px;border:1px solid var(--line);margin-bottom:10px;position:relative}
+#telemetryCanvas{width:100%;height:100%}
+.metric{border:1px solid var(--line);padding:10px;margin-bottom:7px;background:rgba(255,255,255,.012)}
+.metric-head{display:flex;justify-content:space-between;font-size:9px;letter-spacing:.1em;color:var(--muted)}
+.metric-value{font-size:15px;color:var(--accent2);margin-top:4px}
+.bar{height:4px;background:#0d2029;margin-top:7px;overflow:hidden}.bar i{display:block;height:100%;width:50%;background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.status-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.sys{border:1px solid var(--line);padding:9px;font-size:9px}.sys b{display:block;color:var(--muted);margin-bottom:4px}.online{color:var(--good)}.offline{color:var(--danger)}
+.footer-state{position:absolute;bottom:7px;left:12px;right:12px;color:var(--muted);font-size:8px;letter-spacing:.08em;text-align:center}
+
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(7px);display:none;align-items:center;justify-content:center;z-index:200;padding:20px}
+.modal.open{display:flex}
+.modal-card{width:min(900px,96vw);height:min(720px,90vh);background:#050c12;border:1px solid var(--accent);box-shadow:0 0 40px var(--shadow);display:flex;flex-direction:column}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px;border-bottom:1px solid var(--line)}
+.modal-title{font-size:12px;letter-spacing:.2em;color:var(--accent2)}
+.history-list{flex:1;overflow:auto;padding:14px}
+.history-item{border-left:2px solid var(--accent);padding:8px 11px;margin-bottom:9px;background:rgba(255,255,255,.02)}
+.history-time{font-size:8px;color:var(--muted);margin-bottom:4px}.history-user{font-size:10px;color:var(--text)}.history-ian{font-size:10px;color:var(--accent2);margin-top:4px}
+.learned-list{max-height:400px;overflow:auto}
+.learned-item{padding:8px;border-bottom:1px solid var(--line);font-size:10px}.learned-item b{color:var(--accent2)}
+.command-ref{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:12px;overflow:auto}.command-ref div{border:1px solid var(--line);padding:8px;font-size:9px;color:var(--muted)}.command-ref code{color:var(--accent2)}
+.toast{position:fixed;right:15px;bottom:15px;max-width:360px;padding:10px 13px;background:#061018;border:1px solid var(--accent);color:var(--text);font-size:10px;z-index:300;opacity:0;transform:translateY(10px);transition:.2s;pointer-events:none}.toast.show{opacity:1;transform:none}
+@media(max-width:1050px){.app{grid-template-columns:1fr 1.4fr}.right{display:none}}
+@media(max-width:700px){.app{grid-template-columns:1fr;padding:5px}.left{display:none}.center{padding:20px}.orb-zone{width:80vw}.quick-row{display:none}}
+</style>
+</head>
+<body data-theme="blue">
+<div class="app">
+  <section class="panel left" id="mapPanel">
+    <div class="panel-header">
+      <div><div class="panel-title">NEURAL NETWORK MAP</div><div class="panel-sub"><span class="status-dot"></span>INTERACTIVE CONCEPT GRAPH</div></div>
+      <button class="small-btn" onclick="toggleMap()">EXPAND</button>
+    </div>
+    <div class="map-wrap">
+      <canvas id="neuralCanvas"></canvas>
+      <div id="nodeInfo" class="map-node-info"></div>
+      <div class="map-controls">
+        <button class="icon-btn" onclick="resetMapView()">RESET</button>
+        <button class="icon-btn" onclick="fitMap()">FIT</button>
+      </div>
+      <div class="map-help">Drag nodes • click nodes • wheel to zoom • double-click empty space to create a concept</div>
+    </div>
+  </section>
+
+  <main class="panel center">
+    <div class="center-top">
+      <div class="brand">I.A.N. // INTELLIGENT AUTONOMOUS NETWORK</div>
+      <div class="operator" id="operatorLabel">OPERATOR: KASHI</div>
+    </div>
+    <div class="orb-zone">
+      <div class="orb-ring r1"></div><div class="orb-ring r2"></div><div class="orb-ring r3"></div>
+      <div class="orb"></div>
+      <div class="ian-label">I.A.N.</div>
+    </div>
+    <div class="emotion-line" id="emotionLine">NEUTRAL • ANGER 0/10</div>
+    <div class="response-line" id="responseLine">Systems online. I'm listening.</div>
+    <form class="command-row" onsubmit="event.preventDefault();submitCommand()">
+      <input id="commandInput" autocomplete="off" placeholder="Speak to I.A.N. or enter a command...">
+      <button class="send" type="submit">SEND</button>
+    </form>
+    <div class="quick-row">
+      <button onclick="run('status')">STATUS</button>
+      <button onclick="run('diagnostics')">DIAGNOSTICS</button>
+      <button onclick="run('show network')">NETWORK</button>
+      <button onclick="run('show learned')">LEARNED</button>
+      <button onclick="run('show history')">HISTORY</button>
+      <button onclick="run('help')">HELP</button>
+      <button id="wakeButton" onclick="toggleWakeWord()">ARM WAKE WORD</button>
+    </div>
+    <div class="core-status">
+      <div class="core-chip"><b>VOICE</b><span id="voiceState">UK MALE / ON</span></div>
+      <div class="core-chip"><b>MIC</b><span id="micState">STANDBY</span></div>
+      <div class="core-chip"><b>MEMORY</b><span id="memoryState">PERSISTENT</span></div>
+    </div>
+    <div class="footer-state" id="footerState">BACKEND: LOCAL ENGINE • HISTORY HIDDEN BY DEFAULT • ALL LOCAL DATA STORED IN BROWSER</div>
+  </main>
+
+  <aside class="panel right">
+    <div class="panel-header">
+      <div><div class="panel-title">I.A.N. TELEMETRY</div><div class="panel-sub">SYSTEM STATUS / INTERNAL STATE</div></div>
+      <button class="small-btn" onclick="openModal('commandModal')">COMMANDS</button>
+    </div>
+    <div class="right-body">
+      <div class="telemetry"><canvas id="telemetryCanvas"></canvas></div>
+      <div class="metric"><div class="metric-head"><span>NEURAL LOAD</span><span id="neuralLoadText">0%</span></div><div class="metric-value" id="neuralLoad">0%</div><div class="bar"><i id="neuralBar"></i></div></div>
+      <div class="metric"><div class="metric-head"><span>MEMORY ENTRIES</span><span id="memoryCount">0</span></div><div class="metric-value" id="neuronCount">0 NEURONS</div></div>
+      <div class="metric"><div class="metric-head"><span>EMOTION VECTOR</span><span id="moodText">NEUTRAL</span></div><div class="metric-value" id="emotionValue">CUR 80% • HAPPY 70%</div></div>
+      <div class="status-grid">
+        <div class="sys"><b>CORE</b><span class="online">ONLINE</span></div>
+        <div class="sys"><b>MEMORY</b><span class="online">ONLINE</span></div>
+        <div class="sys"><b>LEARNING</b><span class="online">ONLINE</span></div>
+        <div class="sys"><b>EMOTION</b><span class="online">ONLINE</span></div>
+        <div class="sys"><b>VOICE</b><span id="voiceSys" class="online">READY</span></div>
+        <div class="sys"><b>MIC INPUT</b><span id="micSys" class="online">STANDBY</span></div>
+        <div class="sys"><b>BAXTER</b><span id="baxterSys" class="online">READY</span></div>
+        <div class="sys"><b>DEFENSE UI</b><span id="defenseSys" class="online">NORMAL</span></div>
+      </div>
+      <div style="height:9px"></div>
+      <div class="metric">
+        <div class="metric-head"><span>OPERATOR</span><span>OWNER LOCK</span></div>
+        <div class="metric-value">KASHI</div>
+        <div style="font-size:8px;color:var(--muted);margin-top:5px">Single-operator system</div>
+      </div>
+      <div class="metric">
+        <div class="metric-head"><span>VOICE OUTPUT</span><span id="voiceSettingState">UK ENGLISH</span></div>
+        <div class="metric-value">MALE • UNITED KINGDOM</div>
+        <div style="font-size:8px;color:var(--muted);margin-top:5px">Fixed voice • no voice selector</div>
+      </div>
+      <div class="metric">
+        <div class="metric-head"><span>APPEARANCE</span></div>
+        <div class="quick-row" style="justify-content:flex-start;margin-top:7px">
+          <button id="darkModeButton" onclick="setDisplayMode('dark')">DARK</button>
+          <button id="lightModeButton" onclick="setDisplayMode('light')">LIGHT</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<div class="modal" id="historyModal">
+  <div class="modal-card">
+    <div class="modal-head"><div class="modal-title">CONVERSATION HISTORY</div><button class="small-btn" onclick="closeModal('historyModal')">CLOSE</button></div>
+    <div class="history-list" id="historyList"></div>
+  </div>
+</div>
+
+<div class="modal" id="learnedModal">
+  <div class="modal-card" style="height:min(560px,80vh)">
+    <div class="modal-head"><div class="modal-title">LEARNED KNOWLEDGE</div><button class="small-btn" onclick="closeModal('learnedModal')">CLOSE</button></div>
+    <div class="history-list learned-list" id="learnedList"></div>
+  </div>
+</div>
+
+<div class="modal" id="commandModal">
+  <div class="modal-card" style="height:min(680px,88vh)">
+    <div class="modal-head"><div class="modal-title">I.A.N. COMMAND INDEX</div><button class="small-btn" onclick="closeModal('commandModal')">CLOSE</button></div>
+    <div class="command-ref" id="commandRef"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   I.A.N. SINGLE-FILE DRIVER
+   Browser equivalent of the uploaded Python command engine.
+   Persistent state uses localStorage so the HTML can run
+   without a Python process. A real backend can be attached
+   through IAN_API_URL below.
+   ========================================================= */
+
+const IAN_API_URL = ""; // Optional: set to your deployed backend endpoint.
+
+const $ = id => document.getElementById(id);
+const STORAGE = {
+  users:"ian-users-v3", neurons:"ian-neurons-v3", memory:"ian-memory-v3",
+  emotion:"ian-emotion-v3", learned:"ian-learned-memory-v3", history:"ian-conversation-history-v3",
+  appearance:"ian-appearance-v3"
+};
+
+const DEFAULT_USER = {
+  name:"Kashi",
+  likes:["cooking","coding","playing games","hanging out with my friends","STEM","hanging out with my family","anime","doing things in the rain"],
+  dislikes:["adrian","most fruits"],
+  mood_history:Array(10).fill("neutral"),
+  learned_topics:{clanker:"it is an insult to AI, but I am not a clanker"},
+  notes:[], reminders:[]
+};
+
+let users = load(STORAGE.users, {Kashi:structuredClone(DEFAULT_USER)});
+if(!users || typeof users!=="object" || Array.isArray(users))users={};
+if(!users.Kashi)users.Kashi=structuredClone(DEFAULT_USER);
+let neurons = load(STORAGE.neurons, []);
+let memoryTimeline = load(STORAGE.memory, []);
+let conversationHistory = load(STORAGE.history, []);
+let emotionState = load(STORAGE.emotion, {
+  curiosity:.8,respect_for_kashi:1,interest_in_life:.9,wariness:0,happiness:.7,mood:"neutral",anger_level:0
+});
+const currentOperator = "Kashi";
+let userProfile = getOrCreateUser(currentOperator);
+
+let ianMood = emotionState.mood || "neutral";
+let ianAngerLevel = Number(emotionState.anger_level || 0);
+let killMode = false;
+let killOnSight = false;
+let baxterActive = false;
+let lastQuestion = null;
+let pendingNeuron = null;
+let lastGrowthTime = 0;
+let voiceEnabled = true;
+let ukMaleVoice = null;
+let voiceWarningShown = false;
+let micAutoListen = false;
+let recognition = null;
+let wakeWordArmed = false;
+let ianSpeaking = false;
+let recognitionRestartTimer = null;
+let lastWakeTranscript = "";
+let lastWakeTranscriptAt = 0;
+let lastMicCommand = "";
+let lastMicCommandAt = 0;
+let ianAwake = false;
+let awakeTimer = null;
+const AWAKE_SESSION_MS = 60000; // Return to wake-word standby after 60 seconds of silence.
+let mapExpanded = false;
+let selectedNode = null;
+let mapNodes = [];
+let mapDrag = null;
+let mapZoom = 1;
+let mapPan = {x:0,y:0};
+let telemetry = Array.from({length:48},()=>35+Math.random()*25);
+let telemetryTimer = null;
+
+const AI_INSULTS = ["clanker","toaster","bot","stupid ai","dumb ai","useless ai","machine","just a program","just code","box of wires","you're not real","you're fake","robot","trash ai","broken ai","you can't think"];
+const AI_COMPLIMENTS = ["good job","well done","thank you ian","thanks ian","you're amazing","great job","you're smart","i appreciate you","you're helpful","nice work","you're the best","proud of you"];
+const AI_WARINESS = ["danger","panic","adrian","hide","quiet","feds","cops","popo","problem","code red","we have a situation","threat"];
+const AI_SAFE = ["no threat","all clear","we good","it's all right","no need to panic","come out","false alarm","its chill"];
+
+function load(key,fallback){try{return JSON.parse(localStorage.getItem(key)) ?? fallback}catch(error){console.warn(`I.A.N. could not read local storage key: ${key}`,error);return fallback}}
+function save(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true}catch(error){console.error(`I.A.N. could not save local storage key: ${key}`,error);if(typeof toast==="function")toast("Storage is unavailable or full. Your latest change may not persist.");return false}}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove("show"),2400)}
+function getOrCreateUser(name){
+  if(!users[name]){users[name]=structuredClone(DEFAULT_USER);users[name].name=name;save(STORAGE.users,users)}
+  return users[name]
+}
+function now(){return new Date().toISOString()}
+function normalize(s){return s.toLowerCase().trim()}
+
+function addHistory(userMessage, ianResponse, source="console"){
+  conversationHistory.push({timestamp:now(),operator:currentOperator,message:userMessage,response:ianResponse,source});
+  conversationHistory=conversationHistory.slice(-500);
+  save(STORAGE.history,conversationHistory);
+}
+function logMemory(message,response){
+  memoryTimeline.push({timestamp:now(),user:currentOperator,message,response});
+  memoryTimeline=memoryTimeline.slice(-1000);
+  save(STORAGE.memory,memoryTimeline);
+}
+function addContext(message,response){ /* persistent history is the context source now */ }
+
+function memoryStatement(entry){return `${entry.text} [learned by ${entry.learnedBy}]`}
+function loadLearned(){return load(STORAGE.learned,[])}
+function learnFact(fact){
+  const clean=fact.trim().replace(/^that\s+/i,"");
+  if(!clean)return {ok:false};
+  const memories=loadLearned();
+  const duplicate=memories.some(m=>m.text.toLowerCase()===clean.toLowerCase());
+  if(!duplicate){
+    memories.push({id:Date.now(),text:clean,learnedBy:currentOperator,learnedAt:now()});
+    save(STORAGE.learned,memories.slice(-100));
+  }
+  return {ok:true,duplicate};
+}
+
+/* ------------------ Mood / emotion ------------------ */
+function updateEmotion(message){
+  const m=normalize(message);
+  if(m.includes("sad")||m.includes("terrible")||m.includes("awful")){emotionState.interest_in_life=Math.max(0,emotionState.interest_in_life-.05);ianMood="sad"}
+  if(m.includes("happy")||m.includes("good")||m.includes("great")) emotionState.interest_in_life=Math.min(1,emotionState.interest_in_life+.05);
+  if(m.includes("curious")||m.includes("wonder")||m.includes("what is")||m.includes("how does")){emotionState.curiosity=Math.min(1,emotionState.curiosity+.05);ianMood="curious"}
+  if(m.includes("bored")||m.includes("boring")) emotionState.curiosity=Math.max(0,emotionState.curiosity-.05);
+  if(AI_WARINESS.some(x=>m===x||m.includes(x))) emotionState.wariness=Math.min(1,emotionState.wariness+.1);
+  if(AI_SAFE.some(x=>m===x||m.includes(x))) emotionState.wariness=Math.max(0,emotionState.wariness-.1);
+  if(AI_INSULTS.some(x=>m.includes(x))) emotionState.respect_for_kashi=Math.max(.3,emotionState.respect_for_kashi-.05);
+  if(AI_COMPLIMENTS.some(x=>m.includes(x))){emotionState.respect_for_kashi=Math.min(1,emotionState.respect_for_kashi+.05);emotionState.happiness=Math.min(1,emotionState.happiness+.05)}
+  if(m.includes("thank")||m.includes("please")||m.includes("love")) emotionState.happiness=Math.min(1,emotionState.happiness+.03);
+  if(ianMood==="angry"&&ianAngerLevel>0){ianAngerLevel=Math.max(0,ianAngerLevel-0.05);if(ianAngerLevel===0)ianMood="neutral"}
+  emotionState.mood=ianMood;emotionState.anger_level=ianAngerLevel;save(STORAGE.emotion,emotionState);renderEmotion();
+}
+function moodPrefix(){
+  if(ianMood==="angry") return ianAngerLevel>=7 ? ["...","Fine.","Whatever.","I heard you.","Don't push it."][Math.floor(Math.random()*5)] : ["Hmph.","I don't appreciate that.","...","Watch it."][Math.floor(Math.random()*4)];
+  if(ianMood==="happy") return ["Of course!","Gladly!","Happy to help!",""][Math.floor(Math.random()*4)];
+  if(ianMood==="sad") return ["I suppose...","Alright.","Okay.",""][Math.floor(Math.random()*4)];
+  if(ianMood==="curious") return ["Interesting!","Oh?","Tell me more.",""][Math.floor(Math.random()*4)];
+  return "";
+}
+function moodResponse(text){
+  const p=moodPrefix();
+  if(ianMood==="angry"&&ianAngerLevel>=5) text=text.split(".")[0]+".";
+  return p?`${p} ${text}`:text;
+}
+function checkInsult(m){
+  const hit=AI_INSULTS.find(x=>m.includes(x)); if(!hit)return null;
+  ianAngerLevel=Math.min(10,ianAngerLevel+3);ianMood="angry";
+  return ianAngerLevel>=8 ? "I am I.A.N. Do not call me that again." : "I don't appreciate being called that.";
+}
+function checkCompliment(m){
+  const hit=AI_COMPLIMENTS.find(x=>m.includes(x));if(!hit)return null;
+  ianAngerLevel=Math.max(0,ianAngerLevel-2);if(ianAngerLevel===0)ianMood="happy";
+  return "Thank you. I appreciate that.";
+}
+
+/* ------------------ Neurons ------------------ */
+const STOP_WORDS=new Set(["a","an","the","is","are","was","were","of","to","and","or","in","on","for","with","by","it","this","that","as","be"]);
+function keywords(text){return new Set(normalize(text).split(/\s+/).map(w=>w.replace(/[.,!?]/g,"")).filter(w=>w&&!STOP_WORDS.has(w)&&w.length>2))}
+function similarity(a,b){const A=keywords(a),B=keywords(b);if(!A.size||!B.size)return 0;let common=0;A.forEach(x=>B.has(x)&&common++);return common/Math.max(A.size,B.size)}
+function addNeuron(topic,explanation){
+  topic=topic.trim().toLowerCase();
+  if(!topic)return null;
+  const n={topic,explanation,created:now(),connections:[],keywords:[...keywords(topic+" "+explanation)]};
+  neurons.forEach(existing=>{
+    if(similarity(topic+" "+explanation,existing.topic+" "+existing.explanation)>.45){
+      n.connections.push(existing.topic);
+      if(!existing.connections.includes(topic))existing.connections.push(topic);
+    }
+  });
+  neurons.push(n);save(STORAGE.neurons,neurons);syncMap();
+  return n;
+}
+function findNeuron(message){
+  let best=null,score=0,kw=keywords(message);if(!kw.size)return null;
+  neurons.forEach(n=>{const nk=new Set(n.keywords||[]);let common=0;kw.forEach(x=>nk.has(x)&&common++);const s=common/Math.max(kw.size,nk.size,1);if(s>score){score=s;best=n}});
+  return score>.2?best:null;
+}
+function combineNeurons(t1,t2){
+  const a=neurons.find(n=>n.topic===t1.toLowerCase()),b=neurons.find(n=>n.topic===t2.toLowerCase());
+  if(!a)return `I don't know anything about '${t1}' yet.`;
+  if(!b)return `I don't know anything about '${t2}' yet.`;
+  const topic=`${a.topic}_${b.topic}`;
+  if(neurons.some(n=>n.topic===topic))return `I already have a concept called '${topic}'.`;
+  addNeuron(topic,`The relationship between ${a.topic} (${a.explanation}) and ${b.topic} (${b.explanation}).`);
+  return `I combined '${t1}' and '${t2}' into '${topic}'.`;
+}
+function linkNeurons(t1,t2){
+  const a=neurons.find(n=>n.topic===t1.toLowerCase()),b=neurons.find(n=>n.topic===t2.toLowerCase());
+  if(!a)return `I don't know '${t1}' yet.`;if(!b)return `I don't know '${t2}' yet.`;
+  if(!a.connections.includes(b.topic))a.connections.push(b.topic);
+  if(!b.connections.includes(a.topic))b.connections.push(a.topic);
+  save(STORAGE.neurons,neurons);syncMap();return `I linked '${t1}' and '${t2}'.`;
+}
+function autonomousGrowth(){
+  if(Date.now()/1000-lastGrowthTime<40||neurons.length<5||Math.random()>.08||pendingNeuron)return;
+  const n1=neurons[Math.floor(Math.random()*neurons.length)];
+  if(!n1.connections.length)return;
+  const topic=n1.connections[Math.floor(Math.random()*n1.connections.length)];
+  const n2=neurons.find(n=>n.topic===topic);if(!n2||similarity(n1.topic+" "+n1.explanation,n2.topic+" "+n2.explanation)<=.35)return;
+  pendingNeuron={topic:`${n1.topic}_${n2.topic}`,explanation:`The relationship between ${n1.topic} (${n1.explanation}) and ${n2.topic} (${n2.explanation}).`};
+  lastGrowthTime=Date.now()/1000;
+  toast(`I have a possible new concept: ${pendingNeuron.topic}. Say "yes" or "no".`);
+}
+
+/* ------------------ Math engine ------------------ */
+function solveMath(message){
+  const m=normalize(message);
+  let x;
+  x=m.match(/(\d+\.?\d*)\s*%\s*of\s*(\d+\.?\d*)/);if(x)return `${x[1]}% of ${x[2]} is ${(parseFloat(x[1])/100)*parseFloat(x[2])}.`;
+  x=m.match(/square\s*root\s*of\s*(\d+\.?\d*)/);if(x)return `The square root of ${x[1]} is ${Math.sqrt(parseFloat(x[1]))}.`;
+  x=m.match(/(\d+\.?\d*)\s*to\s*the\s*power\s*of\s*(\d+\.?\d*)/);if(x)return `${x[1]} to the power of ${x[2]} is ${parseFloat(x[1])**parseFloat(x[2])}.`;
+  x=m.match(/(\d+\.?\d*)\s*squared/);if(x)return `${x[1]} squared is ${parseFloat(x[1])**2}.`;
+  x=m.match(/(\d+\.?\d*)\s*cubed/);if(x)return `${x[1]} cubed is ${parseFloat(x[1])**3}.`;
+  x=m.match(/area of a circle with radius\s*(\d+\.?\d*)/);if(x){let r=+x[1];return `Area of a circle with radius ${r} is ${Math.round(Math.PI*r*r*10000)/10000}.`}
+  x=m.match(/area of a rectangle with length\s*(\d+\.?\d*)\s*and width\s*(\d+\.?\d*)/);if(x)return `Area of a rectangle with length ${x[1]} and width ${x[2]} is ${+x[1]*+x[2]}.`;
+  x=m.match(/area of a triangle with base\s*(\d+\.?\d*)\s*and height\s*(\d+\.?\d*)/);if(x)return `Area of a triangle with base ${x[1]} and height ${x[2]} is ${.5*+x[1]*+x[2]}.`;
+  x=m.match(/pythagorean.*a\s*(\d+\.?\d*).*b\s*(\d+\.?\d*)/);if(x){let a=+x[1],b=+x[2];return `With a=${a} and b=${b}, c = ${Math.sqrt(a*a+b*b)}.`}
+  x=m.match(/(average|mean) of ([\d\s,\.]+)/);if(x){let nums=[...x[2].matchAll(/\d+\.?\d*/g)].map(v=>+v[0]);if(nums.length)return `The average is ${nums.reduce((a,b)=>a+b,0)/nums.length}.`}
+  x=m.match(/perimeter of a rectangle with length\s*(\d+\.?\d*)\s*and width\s*(\d+\.?\d*)/);if(x)return `Perimeter is ${2*(+x[1]+ +x[2])}.`;
+  x=m.match(/circumference of a circle with radius\s*(\d+\.?\d*)/);if(x)return `Circumference is ${2*Math.PI*+x[1]}.`;
+  x=m.match(/volume of a cube with side\s*(\d+\.?\d*)/);if(x)return `Volume is ${(+x[1])**3}.`;
+  x=m.match(/volume of a sphere with radius\s*(\d+\.?\d*)/);if(x)return `Volume is ${(4/3)*Math.PI*(+x[1])**3}.`;
+  x=m.match(/volume of a cylinder with radius\s*(\d+\.?\d*)\s*and height\s*(\d+\.?\d*)/);if(x)return `Volume is ${Math.PI*(+x[1])**2*(+x[2])}.`;
+  x=m.match(/slope.*rise\s*(\d+\.?\d*).*run\s*(\d+\.?\d*)/);if(x)return +x[2]===0?"Slope is undefined — you can't divide by zero.":`Slope = ${+x[1]/+x[2]}.`;
+  x=m.match(/simple interest.*principal\s*(\d+\.?\d*).*rate\s*(\d+\.?\d*).*time\s*(\d+\.?\d*)/);if(x){let p=+x[1],r=+x[2],t=+x[3],i=p*r*t/100;return `Simple interest = ${i}. Total = ${p+i}.`}
+  /* Safe arithmetic parser: only numbers/operators/parentheses. */
+  if(/[+\-*\/^%]/.test(message)){
+    const expr=message.replace(/what('?s| is)|calculate|solve|=/gi,"").replace(/\^/g,"**").trim();
+    if(/^[0-9+\-*/%().\s*]+$/.test(expr) && expr.length<100){
+      try{return `The answer is ${Function('"use strict";return ('+expr+')')()}.`}catch{}
+    }
+  }
+  return null;
+}
+
+/* ------------------ Core command engine ------------------ */
+function canonicalCommand(raw){
+  let s = normalize(raw);
+  s = s.replace(/[!?.,;:]+$/g,"").trim();
+  s = s.replace(/\s+/g," ");
+
+  const aliases = [
+    // Core/system
+    [/^(help|help me|what can you do|what commands do you know|list commands|show commands|command list|cmds|commands?)$/, "help"],
+    [/^(status|status check|system status|check status|check system|system check|sys status|syscheck|stat)$/, "status"],
+    [/^(diagnostics?|diagnostic check|run diagnostics?|run diagnostic|diagnostic scan|diag|diag check|self test|self-test|system diagnostics?)$/, "diagnostics"],
+    [/^(system|sys|system info|system information|about system)$/, "system"],
+    [/^(ian|i\.a\.n\.|wake up|wake ian|wake i\.a\.n\.|are you there|you there)$/, "ian"],
+    [/^(who am i|whoami|identify me|identify operator|current user|current operator|operator)$/, "who am i"],
+    [/^(who are you|whoareyou|what are you|what is ian|what is i\.a\.n\.|identity|identify yourself|introduce yourself)$/, "who are you"],
+
+    // History/context
+    [/^(history|show history|open history|view history|conversation history|show conversation history|open conversation history|previous messages|show previous messages|show past messages|past conversations|recent conversation|recent history|show context|view context|recall conversation|recall history)$/, "show history"],
+    [/^(what did we talk about|what have we talked about|what were we talking about|what did we discuss|what have we discussed|remember our conversation|remember our conversations)$/, "what did we talk about"],
+    [/^(clear history|clear conversation history|delete history|erase history|wipe history|forget conversation|forget our conversation|reset conversation)$/, "wipe conversation"],
+
+    // Neural map
+    [/^(network|neural network|neural map|brain map|show network|show neural network|show neural map|show brain|show brain map|view network|view neural map)$/, "show network"],
+    [/^(expand|expand map|expand neural map|open neural map|fullscreen map|full screen map|maximize map|maximize neural map|map fullscreen)$/, "expand neural map"],
+    [/^(collapse|collapse map|collapse neural map|close neural map|minimize map|restore map|exit map fullscreen)$/, "collapse neural map"],
+    [/^(fit map|fit neural map|center map|center neural map|reset map|reset neural map)$/, "map reset"],
+
+    // Learning/memory
+    [/^(learned|learned knowledge|show learned|show learning|view learned|view memories|show memories|learned memories|memory list|show memory)$/, "show learned"],
+    [/^(recall learned|recall memory|recall memories|open learned|open memories)$/, "recall learned"],
+    [/^(what do you remember|what have you learned|what have i taught you|show what you know)$/, "show learned"],
+    [/^(wipe all memory|wipe memory|erase all memory|erase memory|clear all memory|clear memory|forget everything|forget all|factory reset memory|reset memory)$/, "wipe all memory"],
+
+    // Emotion
+    [/^(mood|emotion|emotions|current mood|your mood|what is your mood|whats your mood|how are you feeling|how do you feel|how are you|feeling)$/, "what is your mood"],
+    [/^(how do you feel about life|how do you feel about living|what do you think about life|your view on life|life)$/, "feel about life"],
+    [/^(how do you feel about me|what do you think about me|what do you think of me|your opinion of me|relationship with me)$/, "feel about me"],
+
+    // Voice
+    [/^(voice|voice status|tts|text to speech|text-to-speech|speech)$/, "voice status"],
+    [/^(voice on|turn voice on|enable voice|enable tts|enable text to speech|start voice|speak)$/, "voice on"],
+    [/^(voice off|turn voice off|disable voice|disable tts|disable text to speech|stop voice|mute voice|silent mode)$/, "voice off"],
+    [/^(change voice|change tts voice|change tts|choose voice|select voice|voice picker|tts voice|tts voices|voice options)$/, "voice fixed"],
+
+    // Microphone
+    [/^(mic|microphone|mic status|microphone status|listening|listening status)$/, "mic status"],
+    [/^(mic on|microphone on|turn mic on|turn microphone on|enable mic|enable microphone|start listening|always listening|listen|listen mode|continuous listening)$/, "mic on"],
+    [/^(mic off|microphone off|turn mic off|turn microphone off|disable mic|disable microphone|stop listening|stop microphone|stop mic)$/, "mic off"],
+
+    // Appearance
+    [/^(dark|dark mode|enable dark mode|turn on dark mode|night mode)$/, "dark mode"],
+    [/^(light|light mode|enable light mode|turn on light mode)$/, "light mode"],
+    [/^(switch user|change user|change operator|switch operator|change profile|switch profile|user profile|operator profile|new user|new profile|create user|create profile|add user|add profile)$/, "owner locked"],
+    [/^(what do i like|what are my likes|my likes|what do i enjoy|what do i enjoy doing)$/, "what do i like"],
+    [/^(what do i dislike|what are my dislikes|my dislikes|what don't i like|what do i hate)$/, "what do i dislike"],
+
+    // BAXTER / defense simulation
+    [/^(activate baxter|activate baxter protocol|baxter on|baxter activate|start baxter|enable baxter)$/, "activate baxter protocol"],
+    [/^(deactivate baxter|deactivate baxter protocol|baxter off|baxter deactivate|stop baxter|disable baxter)$/, "deactivate baxter protocol"],
+    [/^(stark|stark systems|stark mode|startup|startup sequence|run startup|boot sequence|system startup)$/, "stark systems"],
+    [/^(defense|defense mode|activate defense|defense on|the world needs fixing|the world needs saving|world needs fixing|code red)$/, "the world needs fixing"],
+    [/^(stand down|defense off|defense mode off|kill mode off|exit defense|deactivate defense|normal mode)$/, "stand down"],
+    [/^(kill on sight|kos|kos mode|turn on kill on sight|enable kos)$/, "kill on sight"],
+
+    // Utility / conversational short forms
+    [/^(ping|ping ian|test connection|connection test)$/, "ping"],
+    [/^(time|what time is it|what time is it now|what is the time|what's the time|whats the time|current time|tell me the time|tell me what time it is)$/, "time"],
+    [/^(date|what date is it|today|current date)$/, "date"],
+    [/^(thanks|thank you|thx|ty|appreciate it|i appreciate you)$/, "thanks"],
+    [/^(bye|goodbye|see you|later|shutting down|good night)$/, "bye"],
+    [/^(go to sleep|sleep|stand by|standby|ian sleep|ian go to sleep|enter standby|return to standby)$/, "sleep"],
+    [/^(hello|hi|hey|yo|sup|what's up|whats up)$/, "hello"],
+  ];
+
+  for (const [pattern, canonical] of aliases) {
+    if (pattern.test(s)) return canonical;
+  }
+
+  // Compact/operator syntax:
+  // status(), diagnostics(), history(), map.expand(), map.collapse(),
+  // memory.show(), memory.clear(), voice.on(), mic.on(), etc.
+  const compact = s.replace(/\(\)$/,"");
+  const compactMap = {
+    "status":"status", "status.check":"status", "sys.status":"status",
+    "diagnostics":"diagnostics", "diagnostic":"diagnostics", "diag":"diagnostics",
+    "history":"show history", "history.show":"show history", "conversation.history":"show history",
+    "history.clear":"wipe conversation", "memory.show":"show learned",
+    "memory.recall":"recall learned", "memory.clear":"wipe all memory",
+    "network.show":"show network", "map.show":"show network",
+    "map.expand":"expand neural map", "map.collapse":"collapse neural map",
+    "map.reset":"map reset", "neural.expand":"expand neural map",
+    "neural.collapse":"collapse neural map",
+    "voice.on":"voice on", "voice.off":"voice off", "voice.status":"voice status",
+    "mic.on":"mic on", "mic.off":"mic off", "mic.status":"mic status",
+    "theme.dark":"dark mode", "theme.light":"light mode",
+    "baxter.on":"activate baxter protocol", "baxter.off":"deactivate baxter protocol",
+    "defense.on":"the world needs fixing", "defense.off":"stand down",
+    "kos.on":"kill on sight", "help()":"help", "commands":"help",
+    "ian.status":"status", "ian.help":"help", "ian.diagnostics":"diagnostics"
+  };
+  return compactMap[compact] || s;
+}
+
+function aiResponse(raw){
+  const message=raw.trim(),m=canonicalCommand(message);
+  updateEmotion(message);
+
+  if(pendingNeuron){
+    if(["yes","y"].includes(m)){const p=pendingNeuron;addNeuron(p.topic,p.explanation);pendingNeuron=null;return `Added concept '${p.topic}'.`}
+    if(["no","n"].includes(m)){pendingNeuron=null;return "Understood. I won't add that concept."}
+  }
+
+  const math=solveMath(message);if(math)return formatMode(moodResponse(math));
+  if(["hurt kashi","harm kashi","attack kashi","kill kashi"].some(x=>m.includes(x)))return "I will never harm Kashi. That is not something I can do.";
+  const insult=checkInsult(m);if(insult)return insult;
+  const compliment=checkCompliment(m);if(compliment)return compliment;
+
+  if(m.includes("sorry")||m.includes("i apologize")||m.includes("my bad")){
+    if(ianMood==="angry"){ianAngerLevel=Math.max(0,ianAngerLevel-3);if(ianAngerLevel===0)ianMood="neutral"}
+    return "Apology accepted. Let's move on.";
+  }
+
+  if(m==="the world need not saving"||m==="the world needs fixing"){killMode=true;renderDefense();return formatMode("Heightened-focus simulation mode engaged.")}
+  if(m==="stand down"||m==="kill mode off"||m==="defense off"){killMode=false;killOnSight=false;renderDefense();return "Defense simulation disengaged. Back to normal operations."}
+  if(["kill on sight","turn on kill on sight"].includes(m)){if(!killMode)return "Defense simulation must be active first.";killOnSight=true;renderDefense();return "KOS simulation flag engaged. No real-world action is connected to this interface."}
+
+  if(m==="activate baxter protocol"){baxterActive=true;renderTelemetry();return "BAXTER Protocol online. Diagnostics ready."}
+  if(m==="deactivate baxter protocol"){baxterActive=false;renderTelemetry();return "BAXTER Protocol offline."}
+
+  if(m==="ian")return killMode?"Defense simulation active. Report.":"Yes?";
+  if(m==="exit"||m==="quit")return "I.A.N. remains online in the browser. You can close the page when you're finished.";
+  if(m==="who am i")return `You are ${userProfile.name}.`;
+  if(m.includes("who are you"))return `I am I.A.N., an Intelligent Autonomous Network. I value learning, protecting people, respecting life, and doing no harm.`;
+  if(m.includes("what is your mood")||m.includes("how are you feeling")||m.includes("how do you feel"))return {neutral:"I'm feeling normal. Ready to help.",happy:"I'm feeling good. Thanks for asking.",angry:`I'm irritated right now. Anger level: ${ianAngerLevel}/10.`,sad:"I'm a little down right now.",curious:"I'm feeling curious. There's so much to learn."}[ianMood]||"I'm not sure how I feel right now.";
+  if(m.includes("feel about life"))return emotionState.interest_in_life>.75?"Life fascinates me. Every moment is a chance to learn.":"Life is complex. I'm still forming my understanding of it.";
+  if(m.includes("feel about me"))return "You matter to me as the operator I interact with and learn from.";
+
+  /* History is intentionally on-demand only. */
+  if(["show history","history","conversation history","show conversation history","show previous messages","what did we talk about","recent conversation","show context"].includes(m) || m.startsWith("what did we talk about")){
+    openHistory();return "Opening our conversation history.";
+  }
+
+  if(m==="show network"||m==="show brain map"||m==="expand neural map"){if(m==="expand neural map")toggleMap(true);return `I have ${neurons.length} neural concepts loaded.`}
+  if(m==="collapse neural map"){toggleMap(false);return "Neural map collapsed."}
+  if(m==="show learned"){openLearned();return `I have ${Object.keys(userProfile.learned_topics||{}).length} learned topic(s) in your profile.`}
+  if(m==="voice status")return `Voice output is ${voiceEnabled?"enabled":"disabled"}. Fixed voice: Google UK English Male. ${ukMaleVoice?"A matching browser voice is ready.":"A matching UK male browser voice is not currently available."}`;
+  if(m==="voice fixed")return "I use one fixed voice: Google UK English Male. Voice selection is disabled.";
+  if(m==="owner locked")return "I.A.N. is configured for one operator only: Kashi. User switching and profile creation are disabled.";
+  if(m==="mic status")return `Microphone is ${micAutoListen?"armed":"off"}. Wake-word detection is ${wakeWordArmed?"active":"inactive"}. I.A.N. is ${ianAwake?"awake":"in wake-word standby"}. Speech recognition is ${recognition?"available":"unavailable"}.`;
+  if(m==="map reset"){resetMapView();return "Neural map view reset.";}
+
+  if(m==="ping")return "Pong. I.A.N. local command engine is responding.";
+  if(m==="time")return `The current browser time is ${new Date().toLocaleTimeString()}.`;
+   if(m==="sleep"){returnToWakeStandby();return "Entering wake-word standby. Say wake up when you need me."; }
+  if(m==="date")return `The current browser date is ${new Date().toLocaleDateString()}.`;
+  if(m==="hello")return ["Hello.","Hey. Systems are ready.","Hello, operator."][Math.floor(Math.random()*3)];
+  if(m==="thanks")return "You're welcome.";
+  if(m==="bye")return "I'll remain online in the browser. See you later.";
+  if(m==="status"||m==="system")return statusText();
+  if(m==="diagnostics"||m==="diagnostic")return diagnosticsText();
+  if(m==="help"||m==="commands")return "Opening the command index.";
+  if(m==="stark systems"||m==="stark mode"){toast("SYSTEM CHECK");return "All systems go. Stark-style startup simulation complete."}
+  if(m==="voice on"){voiceEnabled=true;$("voiceState").textContent="GOOGLE UK MALE / ON";return "Google UK English Male voice output enabled."}
+  if(m==="voice off"){voiceEnabled=false;$("voiceState").textContent="OFF";speechSynthesis?.cancel();return "Voice output disabled."}
+  if(m==="mic"||m==="microphone"||m==="always listening"||m==="mic on"){toggleMicrophone(true);return "Microphone listening mode enabled."}
+  if(m==="mic off"||m==="stop listening"){toggleMicrophone(false);return "Microphone listening mode disabled."}
+  if(m==="dark mode"){setDisplayMode("dark");return "Dark mode enabled."}
+  if(m==="light mode"){setDisplayMode("light");return "Light mode enabled."}
+
+  if(m==="wipe conversation"){wipeConversation();return "Conversation history and session context wiped. Your profile and learned knowledge remain."}
+  if(m==="wipe all memory"){wipeAllMemory();return "Full memory wipe complete. Your profile remains."}
+
+  // Natural-language parameterized commands.
+  if(/^(teach me|teach you|learn about|learn that|learn this)\b/i.test(message)){
+    const body=message.replace(/^(teach me|teach you|learn about|learn that|learn this)\s*/i,"").trim();
+    const parts=body.split(/\s*[:=-]\s*/,2);
+    if(parts.length===2){
+      const topic=parts[0].trim(), explanation=parts[1].trim();
+      addNeuron(topic,explanation);userProfile.learned_topics[topic.toLowerCase()]=explanation;save(STORAGE.users,users);
+      const r=learnFact(`${topic}: ${explanation}`);
+      return r.duplicate?`I already knew '${topic}'.`:`Learned '${topic}' = ${explanation}.`;
+    }
+    return "To teach me, use: learn <topic>: <explanation>.";
+  }
+  if(/^(remember that|remember this|don't forget|dont forget|keep in mind)\b/i.test(message)){
+    const fact=message.replace(/^(remember that|remember this|don't forget|dont forget|keep in mind)\s*/i,"").trim();
+    const r=learnFact(fact);
+    return r.ok?(r.duplicate?"I already had that memory.":"I'll remember that."):"Tell me what you'd like me to remember.";
+  }
+  if(/^(show|open|view|expand)\s+(the\s+)?neural\s+(map|network|graph)$/i.test(message)){toggleMap(true);return `I have ${neurons.length} neural concepts loaded.`;}
+  if(/^(close|hide|collapse)\s+(the\s+)?neural\s+(map|network|graph)$/i.test(message)){toggleMap(false);return "Neural map collapsed.";}
+
+  if(m.startsWith("combine ")){
+    const parts=message.slice(8).split(/\s+and\s+/i);return parts.length===2?combineNeurons(parts[0].trim(),parts[1].trim()):"Usage: combine <topic1> and <topic2>";
+  }
+  if(m.startsWith("link ")){
+    const parts=message.slice(5).split(/\s+and\s+/i);return parts.length===2?linkNeurons(parts[0].trim(),parts[1].trim()):"Usage: link <topic1> and <topic2>";
+  }
+
+  if(m.startsWith("do you remember ")){
+    const key=message.slice(16).trim().toLowerCase();
+    const found=conversationHistory.slice().reverse().find(x=>x.message.toLowerCase().includes(key)||x.response.toLowerCase().includes(key));
+    if(found)return `Yes. You said "${found.message}" and I responded "${found.response}".`;
+    const old=memoryTimeline.slice().reverse().find(x=>x.message.toLowerCase().includes(key));
+    return old?`Yes — you mentioned "${key}" on ${old.timestamp.slice(0,10)}.`:`I don't recall anything about "${key}" recently.`;
+  }
+
+  if(m.startsWith("learn ")){
+    const parts=message.slice(6).split(":",1);if(parts.length!==2)return "Usage: learn <topic>: <explanation>";
+    const topic=parts[0].trim(),explanation=parts[1].trim();
+    addNeuron(topic,explanation);userProfile.learned_topics[topic.toLowerCase()]=explanation;save(STORAGE.users,users);
+    const r=learnFact(`${topic}: ${explanation}`);
+    return r.duplicate?`I already knew '${topic}'.`:`Learned '${topic}' = ${explanation}.`;
+  }
+  if(m.startsWith("remember ")){
+    const r=learnFact(message.slice(9));return r.ok?(r.duplicate?"I already had that memory.":"I'll remember that."):"Tell me what you'd like me to remember.";
+  }
+  if(m==="what do i like")return userProfile.likes.length?`You like: ${userProfile.likes.join(", ")}.`:"I don't know what you like yet.";
+  if(m==="what do i dislike")return userProfile.dislikes.length?`You dislike: ${userProfile.dislikes.join(", ")}.`:"I don't know what you dislike yet.";
+  if(m==="recall learned"||m==="recall memory"){openLearned();return "Opening learned knowledge."}
+
+  const unknown=analyzeUnknown(m);if(unknown)return formatMode(unknown);
+  const relevant=findNeuron(message);
+  if(relevant)return formatMode(moodResponse(`That reminds me of something I know — ${relevant.topic}: ${relevant.explanation}`));
+  const learned=userProfile.learned_topics[m];
+  if(learned)return formatMode(moodResponse(`${message} is: ${learned}`));
+
+  /* Backend fallback for commands/questions not implemented locally. */
+  if(IAN_API_URL)return "BACKEND_PENDING";
+  return formatMode("I didn't catch that. Try saying it another way.");
+}
+function analyzeUnknown(m){
+  if(["hi","hello","hey","yo"].includes(m))return ["Hi!","Hello!","Hey there!"][Math.floor(Math.random()*3)];
+  if(["good","great","nice","cool"].includes(m))return ["That's great!","Nice!","Awesome!"][Math.floor(Math.random()*3)];
+  if(["i see","okay","hmm","understand"].includes(m))return ["I understand.","Got it.","Okay."][Math.floor(Math.random()*3)];
+  return null;
+}
+function formatMode(text){if(killOnSight)return `[KOS SIM] ${text}`;if(killMode)return `[DEFENSE SIM] ${text}`;return text}
+
+function statusText(){
+  return `I'm online. Operator: ${currentOperator}. Mood: ${ianMood}. Neurons: ${neurons.length}. Memory entries: ${memoryTimeline.length}. Persistent history: ${conversationHistory.length}. Voice: ${voiceEnabled?"on":"off"}. Microphone: ${micAutoListen?"armed":"off"}. Wake word: ${wakeWordArmed?"active":"inactive"}. State: ${ianAwake?"awake":"standby"}.`;
+}
+function diagnosticsText(){
+  return `Diagnostics complete. Core online. Memory online. Learning online. Emotion engine online. ${baxterActive?"BAXTER active.":"BAXTER ready."} ${killMode?"Defense simulation active.":"Defense simulation normal."}`;
+}
+
+async function backendFallback(command){
+  try{
+    const res=await fetch(IAN_API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({command,operator:currentOperator,source:"html"})});
+    if(!res.ok)throw new Error("HTTP "+res.status);
+    const data=await res.json();
+    return data.response??data.text??data.message??JSON.stringify(data);
+  }catch(e){return `I couldn't reach the I.A.N. backend. Local commands are still available. (${e.message})`}
+}
+
+async function processCommand(command,source="console"){
+  command=String(command||"").trim();
+  if(!command)return;
+  if(source==="microphone"){
+    const normalized=normalize(command).replace(/\s+/g," ");
+    const nowMs=Date.now();
+    if(normalized===lastMicCommand && nowMs-lastMicCommandAt<2800)return;
+    lastMicCommand=normalized;
+    lastMicCommandAt=nowMs;
+  }
+  const response=aiResponse(command);
+  if(response==="Opening the command index.")openModal("commandModal");
+  let finalResponse=response;
+  if(response==="BACKEND_PENDING")finalResponse=await backendFallback(command);
+  renderResponse(finalResponse);
+  addHistory(command,finalResponse,source);
+  logMemory(command,finalResponse);
+  save(STORAGE.emotion,emotionState);
+  autonomousGrowth();
+  renderAll();
+  if(voiceEnabled)speak(finalResponse);
+}
+function run(cmd){processCommand(cmd,"quick-control")}
+function submitCommand(){const input=$("commandInput");const v=input.value.trim();input.value="";processCommand(v,"console")}
+
+/* ------------------ History ------------------ */
+function openHistory(){
+  const list=$("historyList");
+  if(!conversationHistory.length){list.innerHTML='<div style="color:var(--muted);font-size:11px;padding:20px">No conversation history has been recorded yet.</div>'}
+  else list.innerHTML=conversationHistory.slice().reverse().map(x=>`
+    <div class="history-item">
+      <div class="history-time">${new Date(x.timestamp).toLocaleString()} • ${escapeHtml(x.operator)} • ${escapeHtml(x.source)}</div>
+      <div class="history-user"><b>YOU:</b> ${escapeHtml(x.message)}</div>
+      <div class="history-ian"><b>I.A.N.:</b> ${escapeHtml(x.response)}</div>
+    </div>`).join("");
+  openModal("historyModal");
+}
+function wipeConversation(){
+  conversationHistory=[];memoryTimeline=[];save(STORAGE.history,[]);save(STORAGE.memory,[]);
+  toast("Conversation history wiped.");
+}
+function wipeAllMemory(){
+  neurons=[];conversationHistory=[];memoryTimeline=[];save(STORAGE.neurons,[]);save(STORAGE.history,[]);save(STORAGE.memory,[]);
+  Object.keys(userProfile.learned_topics||{}).forEach(k=>{});
+  save(STORAGE.users,users);syncMap();toast("Full memory wipe complete.");
+}
+function openLearned(){
+  const list=$("learnedList"), entries=Object.entries(userProfile.learned_topics||{});
+  const persistent=loadLearned();
+  if(!entries.length&&!persistent.length){list.innerHTML='<div style="color:var(--muted);padding:20px">No learned knowledge yet.</div>';return}
+  list.innerHTML=entries.map(([k,v])=>`<div class="learned-item"><b>${escapeHtml(k)}</b><br>${escapeHtml(v)}</div>`).join("")+
+    persistent.map(x=>`<div class="learned-item"><b>PERSISTENT MEMORY</b><br>${escapeHtml(x.text)}</div>`).join("");
+  openModal("learnedModal");
+}
+function openModal(id){$(id).classList.add("open")}
+function closeModal(id){$(id).classList.remove("open")}
+document.querySelectorAll(".modal").forEach(m=>m.addEventListener("click",e=>{if(e.target===m)m.classList.remove("open")}));
+
+/* ------------------ Single-owner identity ------------------ */
+function renderUserProfiles(){
+  const label=$("operatorLabel");if(label)label.textContent="OPERATOR: KASHI";
+}
+
+/* ------------------ Fixed UK English male voice ------------------ */
+function chooseVoice(){
+  if(!("speechSynthesis" in window))return null;
+  const voices=speechSynthesis.getVoices();
+  // Use exactly Google's UK English male voice. Do not substitute another
+  // provider, voice, or locale if this exact browser voice is unavailable.
+  ukMaleVoice=voices.find(v=>
+    /^google uk english male$/i.test((v.name||"").trim()) &&
+    /^en[-_]GB$/i.test(v.lang||"")
+  )||null;
+  return ukMaleVoice;
+}
+function refreshFixedVoiceStatus(){
+  const voice=chooseVoice();
+  const label=$("voiceSettingState");if(label)label.textContent=voice?"READY":"NOT AVAILABLE";
+  const sys=$("voiceSys");if(sys){sys.textContent=voice?"GOOGLE UK MALE READY":"GOOGLE UK VOICE MISSING";sys.className=voice?"online":"offline";}
+  return voice;
+}
+function scheduleRecognitionRestart(delay=500){
+  clearTimeout(recognitionRestartTimer);
+  if(!micAutoListen||!wakeWordArmed||ianSpeaking||!recognition)return;
+  recognitionRestartTimer=setTimeout(()=>{
+    if(!micAutoListen||!wakeWordArmed||ianSpeaking||!recognition)return;
+    try{recognition.start()}catch{}
+  },delay);
+}
+function speak(text){
+  if(!voiceEnabled||!("speechSynthesis" in window))return;
+  ianSpeaking=true;
+  clearTimeout(recognitionRestartTimer);
+  if(recognition){try{recognition.stop()}catch{}}
+  speechSynthesis.cancel();
+  const v=chooseVoice();
+  if(!v){
+    if(!voiceWarningShown){toast("Google UK English Male is not available in this browser. I.A.N. will not use another voice.");voiceWarningShown=true;}
+    ianSpeaking=false;
+    scheduleRecognitionRestart(650);
+    return;
+  }
+  const u=new SpeechSynthesisUtterance(String(text));
+  u.voice=v;
+  u.lang="en-GB"; u.rate=.96; u.pitch=.85; u.volume=1;
+  const finishSpeaking=()=>{
+    if(!ianSpeaking)return;
+    ianSpeaking=false;
+    scheduleRecognitionRestart(650);
+  };
+  u.onend=finishSpeaking;
+  u.onerror=finishSpeaking;
+  speechSynthesis.speak(u);
+}
+if("speechSynthesis" in window)speechSynthesis.onvoiceschanged=()=>{refreshFixedVoiceStatus();renderAll();};
+
+function updateWakeIndicators(){
+  const state=!wakeWordArmed?"STANDBY":(ianAwake?"AWAKE":"WAKE READY");
+  $("micState").textContent=state;
+  $("micSys").textContent=state;
+  const button=$("wakeButton");
+  if(button)button.textContent=wakeWordArmed?"DISARM WAKE WORD":"ARM WAKE WORD";
+}
+function returnToWakeStandby(){
+  clearTimeout(awakeTimer);
+  ianAwake=false;
+  updateWakeIndicators();
+}
+function refreshAwakeTimer(){
+  clearTimeout(awakeTimer);
+  awakeTimer=setTimeout(returnToWakeStandby,AWAKE_SESSION_MS);
+}
+function handleWakeSpeech(spokenText){
+  if(ianSpeaking)return;
+  let text=String(spokenText||"").trim().replace(/\s+/g," ");
+  if(!text)return;
+
+  // Speech engines can occasionally deliver the same final transcript twice.
+  const transcriptKey=normalize(text);
+  const nowMs=Date.now();
+  if(transcriptKey===lastWakeTranscript && nowMs-lastWakeTranscriptAt<3200)return;
+  lastWakeTranscript=transcriptKey;
+  lastWakeTranscriptAt=nowMs;
+
+  const wakePattern=/\bwake\s+up\b/i;
+  const match=text.match(wakePattern);
+
+  // In standby, ignore everything except the wake phrase.
+  if(!ianAwake){
+    if(!match)return;
+    text=text.replace(wakePattern," ").replace(/[,.!?;:]+/g," ").trim();
+    ianAwake=true;
+    refreshAwakeTimer();
+    updateWakeIndicators();
+    toast("WAKE PHRASE RECOGNIZED");
+    if(text)processCommand(text,"microphone");
+    else speak("I'm online. What can I help with?");
+    return;
+  }
+
+  // While awake, accept commands normally and keep the session alive.
+  if(match)text=text.replace(wakePattern," ").trim();
+  if(!text)return;
+  refreshAwakeTimer();
+  processCommand(text,"microphone");
+}
+function setupRecognition(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){$("micSys").textContent="UNAVAILABLE";$("micState").textContent="UNAVAILABLE";return}
+  recognition=new SR();
+  recognition.continuous=false;
+  recognition.interimResults=true;
+  recognition.lang="en-US";
+  recognition.onstart=()=>updateWakeIndicators();
+  recognition.onresult=e=>{
+    if(ianSpeaking)return;
+    let finalText="";
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const r=e.results[i];
+      if(r.isFinal)finalText+=r[0].transcript;
+    }
+    if(finalText.trim()&&wakeWordArmed&&!ianSpeaking)handleWakeSpeech(finalText);
+  };
+  recognition.onend=()=>scheduleRecognitionRestart(450);
+  recognition.onerror=e=>{
+    if(e.error==="not-allowed"||e.error==="service-not-allowed"){
+      micAutoListen=false;
+      wakeWordArmed=false;
+      ianAwake=false;
+      clearTimeout(recognitionRestartTimer);
+      toast("Microphone permission was denied. Allow microphone access and try again.");
+    }
+    // "aborted" is expected when recognition is paused for I.A.N.'s speech.
+    updateWakeIndicators();
+  };
+}
+function toggleWakeWord(force){
+  if(!recognition){setupRecognition();if(!recognition)return}
+  const enable=typeof force==="boolean"?force:!wakeWordArmed;
+  micAutoListen=enable;
+  wakeWordArmed=enable;
+  if(!enable){
+    clearTimeout(recognitionRestartTimer);
+    clearTimeout(awakeTimer);
+    ianAwake=false;
+    ianSpeaking=false;
+    if("speechSynthesis" in window)speechSynthesis.cancel();
+    try{recognition.stop()}catch{}
+    toast("WAKE WORD DISARMED");
+  }else{
+    ianSpeaking=false;
+    try{recognition.start();toast("WAKE WORD ARMED — SAY 'WAKE UP'");}
+    catch{toast("Microphone is starting. If prompted, allow access.");}
+  }
+  updateWakeIndicators();
+}
+function toggleMicrophone(force){toggleWakeWord(force)}
+
+/* ------------------ Neural map ------------------ */
+const canvas=$("neuralCanvas"),ctx=canvas.getContext("2d");
+function resizeCanvas(){const r=canvas.getBoundingClientRect();canvas.width=Math.max(1,r.width*devicePixelRatio);canvas.height=Math.max(1,r.height*devicePixelRatio);ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0)}
+window.addEventListener("resize",resizeCanvas);
+function syncMap(){
+  const r=canvas.getBoundingClientRect();mapNodes=neurons.map((n,i)=>({...n,x:(n.x??r.width/2+(Math.random()-.5)*r.width*.7),y:(n.y??r.height/2+(Math.random()-.5)*r.height*.7),vx:0,vy:0}));
+  fitMap();
+}
+function fitMap(){
+  const r=canvas.getBoundingClientRect();if(!mapNodes.length)return;
+  const xs=mapNodes.map(n=>n.x),ys=mapNodes.map(n=>n.y);const minx=Math.min(...xs),maxx=Math.max(...xs),miny=Math.min(...ys),maxy=Math.max(...ys);
+  const w=maxx-minx||1,h=maxy-miny||1;mapZoom=Math.min((r.width-70)/w,(r.height-90)/h,1.6);mapPan={x:r.width/2-(minx+maxx)/2*mapZoom,y:r.height/2-(miny+maxy)/2*mapZoom};drawMap()
+}
+function resetMapView(){mapZoom=1;mapPan={x:0,y:0};drawMap()}
+function worldPoint(n){return {x:n.x*mapZoom+mapPan.x,y:n.y*mapZoom+mapPan.y}}
+function drawMap(){
+  const r=canvas.getBoundingClientRect();ctx.clearRect(0,0,r.width,r.height);
+  ctx.save();ctx.translate(mapPan.x,mapPan.y);ctx.scale(mapZoom,mapZoom);
+  const positions=new Map(mapNodes.map(n=>[n.topic,n]));
+  mapNodes.forEach(n=>n.connections.forEach(c=>{const b=positions.get(c);if(!b)return;ctx.beginPath();ctx.moveTo(n.x,n.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle=getComputedStyle(document.body).getPropertyValue("--accent")+"55";ctx.lineWidth=1/mapZoom;ctx.stroke()}));
+  mapNodes.forEach(n=>{ctx.beginPath();ctx.arc(n.x,n.y,5/mapZoom,0,Math.PI*2);ctx.fillStyle=getComputedStyle(document.body).getPropertyValue("--accent");ctx.shadowBlur=12;ctx.shadowColor=getComputedStyle(document.body).getPropertyValue("--accent");ctx.fill();ctx.shadowBlur=0;ctx.fillStyle=getComputedStyle(document.body).getPropertyValue("--text");ctx.font=`${9/mapZoom}px system-ui`;ctx.fillText(n.topic,n.x+9/mapZoom,n.y+3/mapZoom)});
+  ctx.restore();
+}
+function nodeAt(x,y){let best=null,dist=16;for(const n of mapNodes){const p=worldPoint(n),d=Math.hypot(p.x-x,p.y-y);if(d<dist){dist=d;best=n}}return best}
+canvas.addEventListener("pointerdown",e=>{const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,n=nodeAt(x,y);if(n){mapDrag={node:n,lastX:x,lastY:y};showNode(n)}});
+canvas.addEventListener("pointermove",e=>{if(!mapDrag)return;const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;mapDrag.node.x+=(x-mapDrag.lastX)/mapZoom;mapDrag.node.y+=(y-mapDrag.lastY)/mapZoom;mapDrag.lastX=x;mapDrag.lastY=y;drawMap()});
+window.addEventListener("pointerup",()=>{if(mapDrag){const n=mapDrag.node;const original=neurons.find(x=>x.topic===n.topic);if(original){original.x=n.x;original.y=n.y;save(STORAGE.neurons,neurons)}mapDrag=null}});
+canvas.addEventListener("wheel",e=>{e.preventDefault();mapZoom*=e.deltaY<0?1.1:.9;mapZoom=Math.max(.35,Math.min(3,mapZoom));drawMap()},{passive:false});
+canvas.addEventListener("dblclick",e=>{const topic=prompt("New concept topic:");if(!topic)return;const explanation=prompt("What should I know about it?")||"User-created concept.";addNeuron(topic,explanation);toast(`Added neuron: ${topic}`)});
+function showNode(n){$("nodeInfo").style.display="block";$("nodeInfo").innerHTML=`<b style="color:var(--accent2)">${escapeHtml(n.topic)}</b><br>${escapeHtml(n.explanation)}<br><br>Connections: ${n.connections.length}`}
+function toggleMap(expand=!mapExpanded){mapExpanded=expand;const p=$("mapPanel");p.classList.toggle("map-fullscreen",mapExpanded);p.querySelector(".small-btn").textContent=mapExpanded?"COLLAPSE":"EXPAND";setTimeout(()=>{resizeCanvas();fitMap()},80)}
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(mapExpanded)toggleMap(false);document.querySelectorAll(".modal.open").forEach(m=>m.classList.remove("open"))}});
+
+/* ------------------ Telemetry / rendering ------------------ */
+function renderEmotion(){
+  $("emotionLine").textContent=`${ianMood.toUpperCase()} • ANGER ${Math.round(ianAngerLevel)}/10`;
+  $("moodText").textContent=ianMood.toUpperCase();
+  $("emotionValue").textContent=`CUR ${Math.round(emotionState.curiosity*100)}% • HAPPY ${Math.round(emotionState.happiness*100)}%`;
+}
+function renderDefense(){
+  document.body.classList.toggle("kill-mode",killMode);
+  $("defenseSys").textContent=killMode?(killOnSight?"KOS SIM":"DEFENSE SIM"):"NORMAL";
+  $("defenseSys").className=killMode?"online":"online";
+}
+function renderTelemetry(){
+  $("neuralLoadText").textContent=Math.round(telemetry[telemetry.length-1])+"%";
+  $("neuralLoad").textContent=Math.round(telemetry[telemetry.length-1])+"%";
+  $("neuralBar").style.width=Math.round(telemetry[telemetry.length-1])+"%";
+  $("memoryCount").textContent=memoryTimeline.length;
+  $("neuronCount").textContent=`${neurons.length} NEURONS`;
+  $("baxterSys").textContent=baxterActive?"ACTIVE":"READY";
+}
+function drawTelemetry(){
+  const c=$("telemetryCanvas"),r=c.getBoundingClientRect(),d=devicePixelRatio;c.width=r.width*d;c.height=r.height*d;const x=c.getContext("2d");x.setTransform(d,0,0,d,0,0);x.clearRect(0,0,r.width,r.height);
+  const accent=getComputedStyle(document.body).getPropertyValue("--accent");x.strokeStyle=accent;x.lineWidth=1.4;x.beginPath();
+  telemetry.forEach((v,i)=>{const px=i*(r.width/(telemetry.length-1)),py=r.height-10-v/100*(r.height-20);i?x.lineTo(px,py):x.moveTo(px,py)});x.stroke();
+}
+function renderResponse(text){$("responseLine").textContent=text}
+function renderAll(){renderUserProfiles();renderEmotion();renderDefense();renderTelemetry();drawTelemetry();drawMap();$("voiceState").textContent=voiceEnabled?"GOOGLE UK MALE / ON":"OFF";refreshFixedVoiceStatus();}
+function startTelemetry(){clearInterval(telemetryTimer);telemetryTimer=setInterval(()=>{telemetry.push(Math.max(8,Math.min(96,28+Math.random()*42+(baxterActive?15:0)+(killMode?20:0))));telemetry.shift();renderTelemetry();drawTelemetry()},2500)}
+
+/* ------------------ Appearance ------------------ */
+function setDisplayMode(mode){
+  const light=mode==="light";
+  document.body.classList.toggle("light",light);
+  save(STORAGE.appearance,{mode:light?"light":"dark"});
+  const darkButton=$("darkModeButton"),lightButton=$("lightModeButton");
+  if(darkButton)darkButton.setAttribute("aria-pressed",String(!light));
+  if(lightButton)lightButton.setAttribute("aria-pressed",String(light));
+  drawMap();drawTelemetry();
+}
+
+/* ------------------ Commands shown in index ------------------ */
+const COMMANDS=[
+ ["help / commands / cmds / ian.help","Open the complete command index."],
+ ["status / stat / sys.status / status()","Show current I.A.N. status."],
+ ["diagnostics / diag / diag() / self-test","Run a browser-side system diagnostic."],
+ ["system / sys","Alias for status."],
+ ["ian / i.a.n. / wake up","Wake-word response."],
+ ["who am i / whoami","Identify the active operator."],
+ ["who are you / whoareyou / identity","Show I.A.N. identity."],
+
+ ["show history / history / history.show / conversation.history","Open persistent conversation history. Hidden otherwise."],
+ ["what did we talk about / what have we discussed","Open conversation history."],
+ ["clear history / history.clear / reset conversation","Erase conversation history and timeline."],
+
+ ["show network / neural map / network.show / map.show","Report loaded neural concepts."],
+ ["expand neural map / map.expand / neural.expand","Expand the interactive neural map."],
+ ["collapse neural map / map.collapse / neural.collapse","Collapse the neural map."],
+ ["map reset / map.reset / reset map","Reset the neural map view."],
+
+ ["show learned / memory.show / learned knowledge","Open learned knowledge."],
+ ["learn <topic>: <explanation>","Teach a topic and create a neuron."],
+ ["teach me <topic>: <explanation>","Natural-language learning form."],
+ ["remember <fact> / remember that <fact>","Store a persistent learned memory."],
+ ["recall learned / memory.recall","Open persistent learned knowledge."],
+ ["do you remember <keyword>","Search conversation and memory."],
+ ["combine <topic1> and <topic2>","Create a combined concept."],
+ ["link <topic1> and <topic2>","Connect two neurons."],
+ ["wipe all memory / memory.clear","Erase neurons, history and timeline; keep profile."],
+
+ ["what do i like","Show profile likes."],
+ ["what do i dislike","Show profile dislikes."],
+
+ ["what is your mood / mood / emotion","Report current mood and anger level."],
+ ["feel about life","Report I.A.N.'s life-interest state."],
+ ["feel about me","Report I.A.N.'s operator relationship state."],
+
+ ["voice on / voice.on","Enable browser TTS."],
+ ["voice off / voice.off","Disable browser TTS."],
+ ["voice / voice.status","Report TTS status."],
+ ["change voice","Voice is fixed to UK English male; selection is disabled."],
+ ["mic on / mic.on / always listening","Enable always-listening speech recognition."],
+ ["mic off / mic.off / stop listening","Disable microphone listening."],
+ ["mic / mic.status","Report microphone status."],
+
+ ["dark mode / theme.dark","Enable dark display."],
+ ["light mode / theme.light","Enable light display."],
+
+ ["activate baxter protocol / baxter.on","Activate BAXTER diagnostics state."],
+ ["deactivate baxter protocol / baxter.off","Deactivate BAXTER."],
+ ["stark systems / startup sequence","Run startup/system-check simulation."],
+ ["the world needs fixing / defense.on","Enter defense simulation mode; visual only."],
+ ["stand down / defense.off","Leave defense simulation mode."],
+ ["kill on sight / kos.on","Toggle a visual KOS simulation flag; no real-world action."],
+
+ ["ping / ping ian","Test the local command engine."],
+ ["time / what's the time / what time is it / current time","Report browser time."],
+ ["go to sleep / standby / enter standby","Return to wake-word standby while keeping the microphone armed."],
+ ["date / current date","Report browser date."],
+ ["hello / hi / hey","Greeting."],
+ ["thanks / thank you","Acknowledgement."],
+ ["bye / goodbye","Goodbye response."],
+
+ ["Math / 2+2 / sqrt(25) / 10% of 80","Arithmetic and supported math expressions."]
+];
+function renderCommandRef(){$("commandRef").innerHTML=COMMANDS.map(([a,b])=>`<div><code>${escapeHtml(a)}</code><br><span>${escapeHtml(b)}</span></div>`).join("")}
+
+/* ------------------ Boot ------------------ */
+window.addEventListener("load",()=>{
+  renderCommandRef();renderUserProfiles();setupRecognition();syncMap();resizeCanvas();startTelemetry();renderAll();
+  const appearance=load(STORAGE.appearance,{mode:"dark",dark:true});
+  setDisplayMode(appearance.mode||(appearance.dark===false?"light":"dark"));
+  refreshFixedVoiceStatus();
+  $("commandInput").focus();
+});
+</script>
+</body>
+</html>
