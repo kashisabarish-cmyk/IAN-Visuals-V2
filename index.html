@@ -378,6 +378,59 @@ function answerContextualFollowUp(message,normalized){
   }
   return `You're referring to “${subject}.” Your last message was: “${turn.message}”. What would you like to know about it?`;
 }
+
+/* ------------------ Context engine: Stage 2 ------------------
+   Deterministic intent recognition. This labels the message type;
+   it does not pretend to understand facts it has not been taught.
+   Explicit command handlers remain higher priority.
+*/
+function classifyIntent(message, canonical=canonicalCommand(message)){
+  const text=normalize(message).replace(/\s+/g," ").trim();
+
+  if(/^(why|how|when|where|which one|what about|and what about|tell me more|explain that|explain it|what do you mean|can you elaborate|elaborate)(\b|\s|\?)/i.test(text)){
+    return {type:"follow_up",confidence:0.98};
+  }
+  if(/^(no\b|actually\b|i meant\b|what i meant\b|correction\b|that's not what i meant\b|that is not what i meant\b|instead\b)/i.test(text) ||
+     /\bnot .+ but .+/i.test(text)){
+    return {type:"correction",confidence:0.92};
+  }
+  if(/\b(i|i'm|i am)\s+(really\s+)?(like|love|enjoy|prefer|dislike|hate|can't stand)\b/i.test(text) ||
+     /\bmy favorite\b/i.test(text)){
+    return {type:"preference",confidence:0.94};
+  }
+  if(/[?]\s*$/.test(text) ||
+     /^(who|what|when|where|why|how|which|whose|whom|is|are|am|do|does|did|can|could|would|will|should|have|has|had)\b/i.test(text) ||
+     /\b(can you|could you|would you|do you|did you|is there|are there)\b/i.test(text)){
+    return {type:"question",confidence:0.88};
+  }
+  if(/^(please\s+)?(show|open|view|display|find|search|look up|calculate|solve|explain|tell|give|make|create|start|stop|enable|disable|turn|set|change|switch|clear|delete|erase|forget|remember|learn|teach|link|combine|expand|collapse|reset|run|activate|deactivate|play|pause|repeat|summarize|translate|compare| list)\b/i.test(text)){
+    return {type:"command",confidence:0.84};
+  }
+  if(/^(i|i'm|i am|you|you're|we|we're|they|he|she|it|this|that|there|my|our|the|a|an)\b/i.test(text) || text.split(/\s+/).length>=3){
+    return {type:"statement",confidence:0.68};
+  }
+  return {type:"unknown",confidence:0.35};
+}
+
+function respondToUnresolvedIntent(intent,message){
+  switch(intent.type){
+    case "follow_up":
+      return "I can tell you're following up, but I don't have a recent conversation detail to connect it to. Could you restate the topic?";
+    case "correction":
+      return "I recognize that as a correction. What part should I update or replace?";
+    case "preference":
+      return "I recognize that as a preference. I won't save it automatically; say “remember that” if you want it stored.";
+    case "question":
+      return "I recognize this as a question, but I don't have enough information or a connected knowledge engine to answer it reliably yet.";
+    case "command":
+      return "I recognize this as a command, but I don't have a matching command handler for it yet. Try “help” to see supported commands.";
+    case "statement":
+      return "I understand that as a statement. If you'd like me to retain it, say “remember that” followed by the information.";
+    default:
+      return "I'm not confident I understand that message. Could you rephrase it?";
+  }
+}
+
 function memoryStatement(entry){return `${entry.text} [learned by ${entry.learnedBy}]`}
 function loadLearned(){return load(STORAGE.learned,[])}
 function learnFact(fact){
@@ -718,8 +771,9 @@ function aiResponse(raw){
   }
 
   if(m.startsWith("learn ")){
-    const parts=message.slice(6).split(":",1);if(parts.length!==2)return "Usage: learn <topic>: <explanation>";
-    const topic=parts[0].trim(),explanation=parts[1].trim();
+    const learnBody=message.slice(6),colonIndex=learnBody.indexOf(":");if(colonIndex<1)return "Usage: learn <topic>: <explanation>";
+    const topic=learnBody.slice(0,colonIndex).trim(),explanation=learnBody.slice(colonIndex+1).trim();
+    if(!topic||!explanation)return "Usage: learn <topic>: <explanation>";
     addNeuron(topic,explanation);userProfile.learned_topics[topic.toLowerCase()]=explanation;save(STORAGE.users,users);
     const r=learnFact(`${topic}: ${explanation}`);
     return r.duplicate?`I already knew '${topic}'.`:`Learned '${topic}' = ${explanation}.`;
@@ -742,9 +796,11 @@ function aiResponse(raw){
   const learned=userProfile.learned_topics[m];
   if(learned)return formatMode(moodResponse(`${message} is: ${learned}`));
 
-  /* Backend fallback for commands/questions not implemented locally. */
+  /* Backend fallback remains higher priority than local intent messaging. */
   if(IAN_API_URL)return "BACKEND_PENDING";
-  return formatMode("I didn't catch that. Try saying it another way.");
+
+  const intent=classifyIntent(message,m);
+  return formatMode(moodResponse(respondToUnresolvedIntent(intent,message)));
 }
 function analyzeUnknown(m){
   if(["hi","hello","hey","yo"].includes(m))return ["Hi!","Hello!","Hey there!"][Math.floor(Math.random()*3)];
