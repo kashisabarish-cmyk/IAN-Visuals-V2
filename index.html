@@ -26,6 +26,9 @@ body.light .toast{background:#f6fbfd;color:#102d3a}
 body.light .history-item,body.light .metric,body.light .core-chip{background:rgba(10,50,70,.035)}
 body.kill-mode{--accent:#ff334f;--accent2:#ff8898;--shadow:rgba(255,51,79,.30);--line:#42131c}
 body.kill-mode:before{content:"";position:fixed;inset:0;pointer-events:none;border:2px solid var(--danger);box-shadow:inset 0 0 50px rgba(255,0,30,.15);z-index:50}
+.omega-mark{position:fixed;left:50%;top:50%;z-index:51;pointer-events:none;opacity:0;transform:translate(-50%,-50%) scale(.72);color:var(--danger);font-family:Georgia,serif;font-size:clamp(100px,22vw,260px);font-weight:400;line-height:1;text-shadow:0 0 18px rgba(255,51,79,.35),0 0 65px rgba(255,51,79,.18);transition:opacity 5s ease,transform 5s cubic-bezier(.2,.7,.2,1)}
+.omega-mark.active{opacity:.24;transform:translate(-50%,-50%) scale(1);animation:omegaBreath 8s ease-in-out 5s infinite}
+@keyframes omegaBreath{50%{opacity:.34;transform:translate(-50%,-50%) scale(1.035)}}
 
 .app{height:100%;display:grid;grid-template-columns:minmax(280px,1.15fr) minmax(420px,1.7fr) minmax(300px,1fr);gap:10px;padding:10px}
 .panel{min-width:0;min-height:0;background:linear-gradient(145deg,rgba(10,21,30,.97),rgba(3,9,13,.97));
@@ -104,6 +107,7 @@ body.kill-mode:before{content:"";position:fixed;inset:0;pointer-events:none;bord
 </style>
 </head>
 <body data-theme="blue">
+<div class="omega-mark" id="omegaMark" aria-hidden="true">Ω</div>
 <div class="app">
   <section class="panel left" id="mapPanel">
     <div class="panel-header">
@@ -234,7 +238,7 @@ const $ = id => document.getElementById(id);
 const STORAGE = {
   users:"ian-users-v3", neurons:"ian-neurons-v3", memory:"ian-memory-v3",
   emotion:"ian-emotion-v3", learned:"ian-learned-memory-v3", history:"ian-conversation-history-v3",
-  appearance:"ian-appearance-v3"
+  userFacts:"ian-user-facts-v1", appearance:"ian-appearance-v3"
 };
 
 const DEFAULT_USER = {
@@ -445,6 +449,45 @@ function learnFact(fact){
   return {ok:true,duplicate};
 }
 
+/* ------------------ Personal learning: Kashi's facts ------------------ */
+function loadUserFacts(){return load(STORAGE.userFacts,[])}
+function captureUserFact(message){
+  const clean=message.trim().replace(/[.!?]+$/,"").trim();
+  if(!clean || clean.length>220 || /[?]/.test(message))return null;
+  const patterns=[
+    {re:/^i\s+(like|love|enjoy|prefer|dislike|hate|can't stand|cannot stand)\s+(.+)$/i,kind:"preference"},
+    {re:/^my favorite ([a-z ]{2,30}) is (.+)$/i,kind:"favorite"},
+    {re:/^i(?:'m| am)\s+(learning|studying|building|working on|interested in)\s+(.+)$/i,kind:"activity"}
+  ];
+  for(const p of patterns){
+    const match=clean.match(p.re); if(!match)continue;
+    const label=match[1].toLowerCase(), detail=match[2].trim();
+    if(!detail || detail.length>120)return null;
+    const fact=p.kind==="favorite" ? `Kashi's favorite ${label} is ${detail}.`
+      : p.kind==="activity" ? `Kashi is ${label} ${detail}.` : `Kashi ${label} ${detail}.`;
+    const facts=loadUserFacts();
+    if(facts.some(x=>String(x.fact).toLowerCase()===fact.toLowerCase()))return {fact,duplicate:true};
+    facts.push({id:Date.now(),kind:p.kind,label,detail,fact,created:now()});
+    save(STORAGE.userFacts,facts.slice(-250));
+    const topic=`kashi ${label} ${detail}`.toLowerCase();
+    if(!neurons.some(n=>(n.topic||"").toLowerCase()===topic))addNeuron(topic,fact);
+    if(p.kind==="preference" && ["like","love","enjoy","prefer"].includes(label) &&
+       !userProfile.likes.some(x=>x.toLowerCase()===detail.toLowerCase()))userProfile.likes.push(detail);
+    if(p.kind==="preference" && ["dislike","hate","can't stand","cannot stand"].includes(label) &&
+       !userProfile.dislikes.some(x=>x.toLowerCase()===detail.toLowerCase()))userProfile.dislikes.push(detail);
+    save(STORAGE.users,users);
+    return {fact,duplicate:false};
+  }
+  return null;
+}
+function userFactsSummary(){
+  const facts=loadUserFacts();
+  return facts.length
+    ? "Here's what I currently know about you:\n"+facts.map(x=>"• "+x.fact).join("\n")
+    : "I don't have any personal facts saved yet. You can tell me things like 'I like cars', 'I'm learning Python', or 'My favorite color is blue'.";
+}
+
+
 /* ------------------ Mood / emotion ------------------ */
 function updateEmotion(message){
   const m=normalize(message);
@@ -591,6 +634,7 @@ function canonicalCommand(raw){
     [/^(fit map|fit neural map|center map|center neural map|reset map|reset neural map)$/, "map reset"],
 
     // Learning/memory
+    [/^(what do you know about me|what have you learned about me|what do you remember about me|show my profile|my profile|my memories|about me|user\.info|profile\.show)$/, "about me"],
     [/^(learned|learned knowledge|show learned|show learning|view learned|view memories|show memories|learned memories|memory list|show memory)$/, "show learned"],
     [/^(recall learned|recall memory|recall memories|open learned|open memories)$/, "recall learned"],
     [/^(what do you remember|what have you learned|what have i taught you|show what you know)$/, "show learned"],
@@ -651,6 +695,7 @@ function canonicalCommand(raw){
     "history":"show history", "history.show":"show history", "conversation.history":"show history",
     "history.clear":"wipe conversation", "memory.show":"show learned",
     "memory.recall":"recall learned", "memory.clear":"wipe all memory",
+    "user.info":"about me", "profile.show":"about me",
     "network.show":"show network", "map.show":"show network",
     "map.expand":"expand neural map", "map.collapse":"collapse neural map",
     "map.reset":"map reset", "neural.expand":"expand neural map",
@@ -669,6 +714,13 @@ function canonicalCommand(raw){
 function aiResponse(raw){
   const message=raw.trim(),m=canonicalCommand(message);
   updateEmotion(message);
+
+  if(!/^(remember|learn|teach|what|why|how|when|where|who|show|open|view|set|change|turn|enable|disable|activate|deactivate)\b/i.test(message)){
+    const savedFact=captureUserFact(message);
+    if(savedFact)return savedFact.duplicate
+      ? "I already have that saved about you."
+      : `I'll remember that about you: ${savedFact.fact}`;
+  }
 
   if(pendingNeuron){
     if(["yes","y"].includes(m)){const p=pendingNeuron;addNeuron(p.topic,p.explanation);pendingNeuron=null;return `Added concept '${p.topic}'.`}
@@ -782,6 +834,7 @@ function aiResponse(raw){
   if(m.startsWith("remember ")){
     const r=learnFact(message.slice(9));return r.ok?(r.duplicate?"I already had that memory.":"I'll remember that."):"Tell me what you'd like me to remember.";
   }
+  if(m==="about me"){openLearned();return userFactsSummary();}
   if(m==="what do i like")return userProfile.likes.length?`You like: ${userProfile.likes.join(", ")}.`:"I don't know what you like yet.";
   if(m==="what do i dislike")return userProfile.dislikes.length?`You dislike: ${userProfile.dislikes.join(", ")}.`:"I don't know what you dislike yet.";
   if(m==="recall learned"||m==="recall memory"){openLearned();return "Opening learned knowledge."}
@@ -875,9 +928,16 @@ function wipeAllMemory(){
 }
 function openLearned(){
   const list=$("learnedList"), entries=Object.entries(userProfile.learned_topics||{});
-  const persistent=loadLearned();
-  if(!entries.length&&!persistent.length){list.innerHTML='<div style="color:var(--muted);padding:20px">No learned knowledge yet.</div>';return}
-  list.innerHTML=entries.map(([k,v])=>`<div class="learned-item"><b>${escapeHtml(k)}</b><br>${escapeHtml(v)}</div>`).join("")+
+  const persistent=loadLearned(), personal=loadUserFacts();
+  if(!entries.length&&!persistent.length&&!personal.length){
+    list.innerHTML='<div style="color:var(--muted);padding:20px">No learned knowledge yet.</div>';
+    openModal("learnedModal");return;
+  }
+  const personalHtml='<div class="learned-item"><b>ABOUT KASHI</b><br>'+
+    (personal.length?personal.map(x=>escapeHtml(x.fact)).join("<br>"):"No personal facts saved yet.")+
+    '</div>';
+  list.innerHTML=personalHtml+
+    entries.map(([k,v])=>`<div class="learned-item"><b>${escapeHtml(k)}</b><br>${escapeHtml(v)}</div>`).join("")+
     persistent.map(x=>`<div class="learned-item"><b>PERSISTENT MEMORY</b><br>${escapeHtml(x.text)}</div>`).join("");
   openModal("learnedModal");
 }
@@ -1069,12 +1129,32 @@ function drawMap(){
   ctx.restore();
 }
 function nodeAt(x,y){let best=null,dist=16;for(const n of mapNodes){const p=worldPoint(n),d=Math.hypot(p.x-x,p.y-y);if(d<dist){dist=d;best=n}}return best}
-canvas.addEventListener("pointerdown",e=>{const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,n=nodeAt(x,y);if(n){mapDrag={node:n,lastX:x,lastY:y};showNode(n)}});
-canvas.addEventListener("pointermove",e=>{if(!mapDrag)return;const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;mapDrag.node.x+=(x-mapDrag.lastX)/mapZoom;mapDrag.node.y+=(y-mapDrag.lastY)/mapZoom;mapDrag.lastX=x;mapDrag.lastY=y;drawMap()});
-window.addEventListener("pointerup",()=>{if(mapDrag){const n=mapDrag.node;const original=neurons.find(x=>x.topic===n.topic);if(original){original.x=n.x;original.y=n.y;save(STORAGE.neurons,neurons)}mapDrag=null}});
+canvas.addEventListener("pointerdown",e=>{
+  const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,n=nodeAt(x,y);
+  if(n){mapDrag={node:n,lastX:x,lastY:y};canvas.style.cursor="grabbing"}
+});
+canvas.addEventListener("pointermove",e=>{
+  const r=canvas.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;
+  if(mapDrag){
+    mapDrag.node.x+=(x-mapDrag.lastX)/mapZoom;mapDrag.node.y+=(y-mapDrag.lastY)/mapZoom;
+    mapDrag.lastX=x;mapDrag.lastY=y;drawMap();return;
+  }
+  const hovered=nodeAt(x,y);
+  if(hovered){showNode(hovered);canvas.style.cursor="grab"}
+  else{hideNode();canvas.style.cursor="default"}
+});
+canvas.addEventListener("pointerleave",()=>{if(!mapDrag){hideNode();canvas.style.cursor="default"}});
+window.addEventListener("pointerup",()=>{
+  if(mapDrag){
+    const n=mapDrag.node,original=neurons.find(x=>x.topic===n.topic);
+    if(original){original.x=n.x;original.y=n.y;save(STORAGE.neurons,neurons)}
+    mapDrag=null;hideNode();canvas.style.cursor="default";
+  }
+});
 canvas.addEventListener("wheel",e=>{e.preventDefault();mapZoom*=e.deltaY<0?1.1:.9;mapZoom=Math.max(.35,Math.min(3,mapZoom));drawMap()},{passive:false});
 canvas.addEventListener("dblclick",e=>{const topic=prompt("New concept topic:");if(!topic)return;const explanation=prompt("What should I know about it?")||"User-created concept.";addNeuron(topic,explanation);toast(`Added neuron: ${topic}`)});
 function showNode(n){$("nodeInfo").style.display="block";$("nodeInfo").innerHTML=`<b style="color:var(--accent2)">${escapeHtml(n.topic)}</b><br>${escapeHtml(n.explanation)}<br><br>Connections: ${n.connections.length}`}
+function hideNode(){const info=$("nodeInfo");if(info){info.style.display="none";info.innerHTML=""}}
 function toggleMap(expand=!mapExpanded){mapExpanded=expand;const p=$("mapPanel");p.classList.toggle("map-fullscreen",mapExpanded);p.querySelector(".small-btn").textContent=mapExpanded?"COLLAPSE":"EXPAND";setTimeout(()=>{resizeCanvas();fitMap()},80)}
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(mapExpanded)toggleMap(false);document.querySelectorAll(".modal.open").forEach(m=>m.classList.remove("open"))}});
 
@@ -1086,6 +1166,8 @@ function renderEmotion(){
 }
 function renderDefense(){
   document.body.classList.toggle("kill-mode",killMode);
+  const omega=$("omegaMark");
+  if(omega)omega.classList.toggle("active",killMode);
   $("defenseSys").textContent=killMode?(killOnSight?"KOS SIM":"DEFENSE SIM"):"NORMAL";
   $("defenseSys").className=killMode?"online":"online";
 }
@@ -1146,6 +1228,9 @@ const COMMANDS=[
  ["link <topic1> and <topic2>","Connect two neurons."],
  ["wipe all memory / memory.clear","Erase neurons, history and timeline; keep profile."],
 
+ ["what do you know about me / show my profile / user.info","Show personal facts I.A.N. has saved about Kashi."],
+ ["I like <thing> / I love <thing> / I prefer <thing>","Automatically save a clear personal preference."],
+ ["I'm learning <topic> / I'm building <project>","Automatically save a learning or project fact."],
  ["what do i like","Show profile likes."],
  ["what do i dislike","Show profile dislikes."],
 
