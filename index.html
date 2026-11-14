@@ -686,6 +686,7 @@ function aiResponse(raw){
   }
 
   if(m==="the world need not saving"||m==="the world needs fixing"){killMode=true;renderDefense();return formatMode("Heightened-focus simulation mode engaged.")}
+  if(m==="absolute"||m==="you are absolute"){killMode=true;renderDefense();return formatMode("Heightened-focus simulation mode engaged.")}
   if(m==="stand down"||m==="kill mode off"||m==="defense off"){killMode=false;killOnSight=false;renderDefense();return "Defense simulation disengaged. Back to normal operations."}
   if(["kill on sight","turn on kill on sight"].includes(m)){if(!killMode)return "Defense simulation must be active first.";killOnSight=true;renderDefense();return "KOS simulation flag engaged. No real-world action is connected to this interface."}
 
@@ -1166,7 +1167,7 @@ const COMMANDS=[
  ["activate baxter protocol / baxter.on","Activate BAXTER diagnostics state."],
  ["deactivate baxter protocol / baxter.off","Deactivate BAXTER."],
  ["stark systems / startup sequence","Run startup/system-check simulation."],
- ["the world needs fixing / defense.on","Enter defense simulation mode; visual only."],
+ ["the world needs fixing / defense.on / you are absolute/ absolute","Enter defense simulation mode; visual only."],
  ["stand down / defense.off","Leave defense simulation mode."],
  ["kill on sight / kos.on","Toggle a visual KOS simulation flag; no real-world action."],
 
