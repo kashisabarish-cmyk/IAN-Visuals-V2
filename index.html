@@ -26,9 +26,9 @@ body.light .toast{background:#f6fbfd;color:#102d3a}
 body.light .history-item,body.light .metric,body.light .core-chip{background:rgba(10,50,70,.035)}
 body.kill-mode{--accent:#ff334f;--accent2:#ff8898;--shadow:rgba(255,51,79,.30);--line:#42131c}
 body.kill-mode:before{content:"";position:fixed;inset:0;pointer-events:none;border:2px solid var(--danger);box-shadow:inset 0 0 50px rgba(255,0,30,.15);z-index:50}
-.omega-mark{position:absolute;inset:0;z-index:2;display:grid;place-items:center;pointer-events:none;opacity:0;transform:scale(.72);color:var(--danger);font-family:Georgia,serif;font-size:clamp(76px,15vw,190px);font-weight:400;line-height:1;text-shadow:0 0 18px rgb(148,0,0),0 0 65px rgb(148,0,0);transition:opacity 5s ease,transform 5s cubic-bezier(.2,.7,.2,1)}
-.omega-mark.active{opacity:.8;transform:scale(1);animation:omegaBreath 8s ease-in-out 5s infinite}
-@keyframes omegaBreath{50%{opacity:.8;transform:scale(1.035)}}
+.omega-mark{position:absolute;inset:0;z-index:2;display:grid;place-items:center;pointer-events:none;opacity:0;transform:scale(.72);color:var(--danger);font-family:Georgia,serif;font-size:clamp(76px,15vw,190px);font-weight:400;line-height:1;text-shadow:0 0 18px rgba(255,51,79,.35),0 0 65px rgba(255,51,79,.18);transition:opacity 5s ease,transform 5s cubic-bezier(.2,.7,.2,1)}
+.omega-mark.active{opacity:.24;transform:scale(1);animation:omegaBreath 8s ease-in-out 5s infinite}
+@keyframes omegaBreath{50%{opacity:.34;transform:scale(1.035)}}
 
 .app{height:100%;display:grid;grid-template-columns:minmax(280px,1.15fr) minmax(420px,1.7fr) minmax(300px,1fr);gap:10px;padding:10px}
 .panel{min-width:0;min-height:0;background:linear-gradient(145deg,rgba(10,21,30,.97),rgba(3,9,13,.97));
@@ -59,11 +59,14 @@ body.kill-mode:before{content:"";position:fixed;inset:0;pointer-events:none;bord
 .orb-zone{width:min(440px,78%);aspect-ratio:1;display:flex;align-items:center;justify-content:center;position:relative}
 .orb-ring{position:absolute;border:1px solid var(--accent);border-radius:50%;opacity:.42;animation:spin 18s linear infinite}
 .r1{inset:4%;border-style:dashed}.r2{inset:12%;animation-direction:reverse;animation-duration:13s}.r3{inset:22%;opacity:.25}
-.orb{width:46%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 38% 35%,#d9fbff 0 2%,var(--accent2) 3%,var(--accent) 24%,rgba(24,174,232,.18) 55%,transparent 72%);
+.orb{width:46%;aspect-ratio:1;border-radius:50%;transition:opacity 1.4s ease,transform 1.4s ease,filter 1.4s ease;background:radial-gradient(circle at 38% 35%,#d9fbff 0 2%,var(--accent2) 3%,var(--accent) 24%,rgba(24,174,232,.18) 55%,transparent 72%);
  box-shadow:0 0 25px var(--accent),0 0 75px var(--shadow),inset 0 0 30px rgba(255,255,255,.22);animation:pulse 2.6s ease-in-out infinite;position:relative}
 .orb:before,.orb:after{content:"";position:absolute;inset:-14%;border:1px solid var(--accent);border-radius:50%;opacity:.25}
+.orb-zone.defense-active .orb{opacity:0;visibility:hidden;animation:none;transition:opacity .35s ease,visibility .35s ease}
 .orb:after{inset:-26%;opacity:.12}
 @keyframes pulse{50%{transform:scale(1.05);filter:brightness(1.25)}}
+body.kill-mode .orb{opacity:0;transform:scale(.55);filter:blur(12px);animation:none}
+body:not(.kill-mode) .orb{opacity:1;transform:scale(1);filter:none}
 @keyframes spin{to{transform:rotate(360deg)}}
 .ian-label{position:absolute;bottom:19%;font-weight:900;font-size:clamp(25px,4vw,44px);letter-spacing:.25em;text-shadow:0 0 18px var(--accent)}
 .emotion-line{margin-top:-5px;text-align:center;font-size:11px;letter-spacing:.14em;color:var(--accent2)}
@@ -238,7 +241,7 @@ const $ = id => document.getElementById(id);
 const STORAGE = {
   users:"ian-users-v3", neurons:"ian-neurons-v3", memory:"ian-memory-v3",
   emotion:"ian-emotion-v3", learned:"ian-learned-memory-v3", history:"ian-conversation-history-v3",
-  userFacts:"ian-user-facts-v1", appearance:"ian-appearance-v3"
+  userFacts:"ian-user-facts-v1", askedQuestions:"ian-asked-questions-v1", activeOperator:"ian-active-operator-v1", appearance:"ian-appearance-v3"
 };
 
 const DEFAULT_USER = {
@@ -259,7 +262,8 @@ let conversationHistory = load(STORAGE.history, []);
 let emotionState = load(STORAGE.emotion, {
   curiosity:.8,respect_for_kashi:1,interest_in_life:.9,wariness:0,happiness:.7,mood:"neutral",anger_level:0
 });
-const currentOperator = "Kashi";
+let currentOperator = load(STORAGE.activeOperator,"Kashi");
+if(typeof currentOperator!=="string" || !currentOperator.trim())currentOperator="Kashi";
 let userProfile = getOrCreateUser(currentOperator);
 
 let ianMood = emotionState.mood || "neutral";
@@ -268,6 +272,7 @@ let killMode = false;
 let killOnSight = false;
 let baxterActive = false;
 let lastQuestion = null;
+let pendingAutonomousQuestion = load(STORAGE.askedQuestions + ":pending", null);
 let pendingNeuron = null;
 let lastGrowthTime = 0;
 let voiceEnabled = true;
@@ -437,8 +442,27 @@ function respondToUnresolvedIntent(intent,message){
 
 function memoryStatement(entry){return `${entry.text} [learned by ${entry.learnedBy}]`}
 function loadLearned(){return load(STORAGE.learned,[])}
+function attributeSecondPersonToIAN(statement){
+  let text=String(statement||"").trim();
+  // When the operator describes I.A.N. in second person, store it from I.A.N.'s perspective.
+  const rules=[
+    [/^you\s+are\b/i,"I am"],[/^you're\b/i,"I am"],[/^you\s+were\b/i,"I was"],
+    [/^you\s+have\b/i,"I have"],[/^you've\b/i,"I have"],
+    [/^you\s+like\b/i,"I like"],[/^you\s+love\b/i,"I love"],
+    [/^you\s+enjoy\b/i,"I enjoy"],[/^you\s+prefer\b/i,"I prefer"],
+    [/^you\s+dislike\b/i,"I dislike"],[/^you\s+hate\b/i,"I hate"],
+    [/^you\s+want\b/i,"I want"],[/^you\s+need\b/i,"I need"],
+    [/^you\s+can\b/i,"I can"],[/^you\s+will\b/i,"I will"],
+    [/^you\s+do\b/i,"I do"],[/^you\s+don't\b/i,"I don't"],
+    [/^you\s+did\b/i,"I did"],[/^your\s+favorite\b/i,"My favorite"]
+  ];
+  for(const [pattern,replacement] of rules){if(pattern.test(text))return text.replace(pattern,replacement);}
+  return text;
+}
 function learnFact(fact){
-  const clean=fact.trim().replace(/^that\s+/i,"");
+  const raw=fact.trim().replace(/^that\s+/i,"");
+  const isAboutIAN=/^(you\b|you're\b|your\s+favorite\b)/i.test(raw);
+  const clean=isAboutIAN?attributeSecondPersonToIAN(raw):attributeFirstPersonToSpeaker(raw,currentOperator);
   if(!clean)return {ok:false};
   const memories=loadLearned();
   const duplicate=memories.some(m=>m.text.toLowerCase()===clean.toLowerCase());
@@ -451,30 +475,66 @@ function learnFact(fact){
 
 /* ------------------ Personal learning: Kashi's facts ------------------ */
 function loadUserFacts(){return load(STORAGE.userFacts,[])}
+function attributeFirstPersonToSpeaker(statement,speaker=currentOperator){
+  let text=String(statement||"").trim();
+  // Statements are stored in third person so they remain correctly attributed.
+  text=text.replace(/^I am\b/i,`${speaker} is`).replace(/^I'm\b/i,`${speaker} is`)
+    .replace(/^I have\b/i,`${speaker} has`).replace(/^I've\b/i,`${speaker} has`)
+    .replace(/^I like\b/i,`${speaker} likes`).replace(/^I love\b/i,`${speaker} loves`)
+    .replace(/^I enjoy\b/i,`${speaker} enjoys`).replace(/^I prefer\b/i,`${speaker} prefers`)
+    .replace(/^I dislike\b/i,`${speaker} dislikes`).replace(/^I hate\b/i,`${speaker} hates`)
+    .replace(/^I want\b/i,`${speaker} wants`).replace(/^I need\b/i,`${speaker} needs`)
+    .replace(/^I'm learning\b/i,`${speaker} is learning`).replace(/^I'm studying\b/i,`${speaker} is studying`)
+    .replace(/^I'm building\b/i,`${speaker} is building`).replace(/^I'm working on\b/i,`${speaker} is working on`)
+    .replace(/^my favorite\b/i,`${speaker}'s favorite`);
+  return text;
+}
+function factForCurrentSpeaker(fact,speaker=currentOperator){
+  const escaped=speaker.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  let text=String(fact||"");
+  const subject=new RegExp(`^${escaped}\\b`,'i');
+  if(subject.test(text)){
+    text=text.replace(new RegExp(`^${escaped}\\s+likes\\b`,'i'),'You like')
+      .replace(new RegExp(`^${escaped}\\s+loves\\b`,'i'),'You love')
+      .replace(new RegExp(`^${escaped}\\s+enjoys\\b`,'i'),'You enjoy')
+      .replace(new RegExp(`^${escaped}\\s+prefers\\b`,'i'),'You prefer')
+      .replace(new RegExp(`^${escaped}\\s+dislikes\\b`,'i'),'You dislike')
+      .replace(new RegExp(`^${escaped}\\s+hates\\b`,'i'),'You hate')
+      .replace(new RegExp(`^${escaped}\\s+wants\\b`,'i'),'You want')
+      .replace(new RegExp(`^${escaped}\\s+needs\\b`,'i'),'You need')
+      .replace(new RegExp(`^${escaped}\\s+has\\b`,'i'),'You have')
+      .replace(new RegExp(`^${escaped}\\s+is\\b`,'i'),'You are')
+      .replace(new RegExp(`^${escaped}\\s+was\\b`,'i'),'You were')
+      .replace(new RegExp(`^${escaped}\\s+does\\b`,'i'),'You do')
+      .replace(new RegExp(`^${escaped}\\s+`,'i'),'You ');
+  }
+  text=text.replace(new RegExp(`^${escaped}\\'s favorite`,'i'),'Your favorite');
+  return text;
+}
 function captureUserFact(message){
-  const clean=message.trim().replace(/[.!?]+$/,"").trim();
+  const clean=message.trim().replace(/[.!?]+$/,'').trim();
   if(!clean || clean.length>220 || /[?]/.test(message))return null;
   const patterns=[
-    {re:/^i\s+(like|love|enjoy|prefer|dislike|hate|can't stand|cannot stand)\s+(.+)$/i,kind:"preference"},
-    {re:/^my favorite ([a-z ]{2,30}) is (.+)$/i,kind:"favorite"},
-    {re:/^i(?:'m| am)\s+(learning|studying|building|working on|interested in)\s+(.+)$/i,kind:"activity"}
+    {re:/^i\s+(like|love|enjoy|prefer|dislike|hate|can't stand|cannot stand)\s+(.+)$/i,kind:'preference'},
+    {re:/^my favorite ([a-z ]{2,30}) is (.+)$/i,kind:'favorite'},
+    {re:/^i(?:'m| am)\s+(learning|studying|building|working on|interested in)\s+(.+)$/i,kind:'activity'}
   ];
+  const verbForms={like:'likes',love:'loves',enjoy:'enjoys',prefer:'prefers',dislike:'dislikes',hate:'hates',"can't stand":"can't stand",'cannot stand':'cannot stand'};
   for(const p of patterns){
     const match=clean.match(p.re); if(!match)continue;
     const label=match[1].toLowerCase(), detail=match[2].trim();
     if(!detail || detail.length>120)return null;
-    const fact=p.kind==="favorite" ? `Kashi's favorite ${label} is ${detail}.`
-      : p.kind==="activity" ? `Kashi is ${label} ${detail}.` : `Kashi ${label} ${detail}.`;
+    const fact=p.kind==='favorite' ? `${currentOperator}'s favorite ${label} is ${detail}.`
+      : p.kind==='activity' ? `${currentOperator} is ${label} ${detail}.`
+      : `${currentOperator} ${verbForms[label]||label} ${detail}.`;
     const facts=loadUserFacts();
     if(facts.some(x=>String(x.fact).toLowerCase()===fact.toLowerCase()))return {fact,duplicate:true};
-    facts.push({id:Date.now(),kind:p.kind,label,detail,fact,created:now()});
+    facts.push({id:Date.now(),speaker:currentOperator,kind:p.kind,label,detail,fact,created:now()});
     save(STORAGE.userFacts,facts.slice(-250));
-    const topic=`kashi ${label} ${detail}`.toLowerCase();
-    if(!neurons.some(n=>(n.topic||"").toLowerCase()===topic))addNeuron(topic,fact);
-    if(p.kind==="preference" && ["like","love","enjoy","prefer"].includes(label) &&
-       !userProfile.likes.some(x=>x.toLowerCase()===detail.toLowerCase()))userProfile.likes.push(detail);
-    if(p.kind==="preference" && ["dislike","hate","can't stand","cannot stand"].includes(label) &&
-       !userProfile.dislikes.some(x=>x.toLowerCase()===detail.toLowerCase()))userProfile.dislikes.push(detail);
+    const topic=`${currentOperator} ${label} ${detail}`.toLowerCase();
+    if(!neurons.some(n=>(n.topic||'').toLowerCase()===topic))addNeuron(topic,fact);
+    if(p.kind==='preference' && ['like','love','enjoy','prefer'].includes(label) && !userProfile.likes.some(x=>x.toLowerCase()===detail.toLowerCase()))userProfile.likes.push(detail);
+    if(p.kind==='preference' && ['dislike','hate',"can't stand",'cannot stand'].includes(label) && !userProfile.dislikes.some(x=>x.toLowerCase()===detail.toLowerCase()))userProfile.dislikes.push(detail);
     save(STORAGE.users,users);
     return {fact,duplicate:false};
   }
@@ -483,7 +543,7 @@ function captureUserFact(message){
 function userFactsSummary(){
   const facts=loadUserFacts();
   return facts.length
-    ? "Here's what I currently know about you:\n"+facts.map(x=>"• "+x.fact).join("\n")
+    ? `Here's what I currently know about ${currentOperator}:\n`+facts.filter(x=>!x.speaker || x.speaker===currentOperator).map(x=>"• "+factForCurrentSpeaker(x.fact,x.speaker||currentOperator)).join("\n")
     : "I don't have any personal facts saved yet. You can tell me things like 'I like cars', 'I'm learning Python', or 'My favorite color is blue'.";
 }
 
@@ -713,6 +773,22 @@ function canonicalCommand(raw){
 
 function aiResponse(raw){
   const message=raw.trim(),m=canonicalCommand(message);
+  const switchMatch=message.match(/^(?:switch user to|speaker is|this is)\s+(.+)$/i);
+  if(switchMatch)return switchOperator(switchMatch[1]);
+  // The next natural-language reply answers I.A.N.'s outstanding question.
+  if(pendingAutonomousQuestion && message.length>1 && !/^(status|diagnostics|help|time|date|ping|hello|hi|bye|stand down|dark mode|light mode)$/i.test(m)){
+    const question=pendingAutonomousQuestion;
+    const attributed=attributeFirstPersonToSpeaker(message,currentOperator);
+    // Also extract structured preferences/activities from the answer when possible.
+    const structuredAnswer=captureUserFact(message);
+    const facts=loadUserFacts();
+    const record={id:Date.now(),speaker:currentOperator,kind:'autonomous-answer',question:question.text,answer:message,fact:`${currentOperator} answered I.A.N.'s question (${question.text}): ${attributed}`,created:now()};
+    facts.push(record);save(STORAGE.userFacts,facts.slice(-250));
+    addNeuron(`${currentOperator} answer ${Date.now()}`,record.fact);
+    pendingAutonomousQuestion=null;save(STORAGE.askedQuestions+':pending',null);
+    updateEmotion(message);
+    return `I'll remember your answer, ${currentOperator}.${structuredAnswer?` I also saved it as a ${structuredAnswer.duplicate?'previously known':'personal'} fact.`:''} ${factForCurrentSpeaker(attributed,currentOperator)}`;
+  }
   updateEmotion(message);
 
   if(!/^(remember|learn|teach|what|why|how|when|where|who|show|open|view|set|change|turn|enable|disable|activate|deactivate)\b/i.test(message)){
@@ -933,8 +1009,8 @@ function openLearned(){
     list.innerHTML='<div style="color:var(--muted);padding:20px">No learned knowledge yet.</div>';
     openModal("learnedModal");return;
   }
-  const personalHtml='<div class="learned-item"><b>ABOUT KASHI</b><br>'+
-    (personal.length?personal.map(x=>escapeHtml(x.fact)).join("<br>"):"No personal facts saved yet.")+
+  const personalHtml='<div class="learned-item"><b>ABOUT '+escapeHtml(currentOperator.toUpperCase())+'</b><br>'+
+    (personal.filter(x=>!x.speaker || x.speaker===currentOperator).length?personal.filter(x=>!x.speaker || x.speaker===currentOperator).map(x=>escapeHtml(factForCurrentSpeaker(x.fact,x.speaker||currentOperator))).join("<br>"): "No personal facts saved yet.")+
     '</div>';
   list.innerHTML=personalHtml+
     entries.map(([k,v])=>`<div class="learned-item"><b>${escapeHtml(k)}</b><br>${escapeHtml(v)}</div>`).join("")+
@@ -945,9 +1021,16 @@ function openModal(id){$(id).classList.add("open")}
 function closeModal(id){$(id).classList.remove("open")}
 document.querySelectorAll(".modal").forEach(m=>m.addEventListener("click",e=>{if(e.target===m)m.classList.remove("open")}));
 
-/* ------------------ Single-owner identity ------------------ */
+/* ------------------ Active speaker identity ------------------ */
 function renderUserProfiles(){
-  const label=$("operatorLabel");if(label)label.textContent="OPERATOR: KASHI";
+  const label=$("operatorLabel");if(label)label.textContent="OPERATOR: "+currentOperator.toUpperCase();
+}
+function switchOperator(name){
+  const clean=String(name||"").trim().replace(/[^\p{L}\p{N} _.-]/gu,"").slice(0,32);
+  if(!clean)return "Tell me the speaker name, for example: switch user to Sam.";
+  currentOperator=clean;userProfile=getOrCreateUser(currentOperator);
+  save(STORAGE.activeOperator,currentOperator);renderUserProfiles();
+  return `Speaker profile switched to ${currentOperator}. I will attribute new first-person statements to ${currentOperator}.`;
 }
 
 /* ------------------ Fixed UK English male voice ------------------ */
@@ -1158,6 +1241,49 @@ function hideNode(){const info=$("nodeInfo");if(info){info.style.display="none";
 function toggleMap(expand=!mapExpanded){mapExpanded=expand;const p=$("mapPanel");p.classList.toggle("map-fullscreen",mapExpanded);p.querySelector(".small-btn").textContent=mapExpanded?"COLLAPSE":"EXPAND";setTimeout(()=>{resizeCanvas();fitMap()},80)}
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(mapExpanded)toggleMap(false);document.querySelectorAll(".modal.open").forEach(m=>m.classList.remove("open"))}});
 
+/* ------------------ Autonomous curiosity prompts ------------------ */
+function questionHistory(){return load(STORAGE.askedQuestions,[])}
+function buildAutonomousQuestion(){
+  const facts=loadUserFacts();
+  const recent=questionHistory();
+  const aboutUser=[
+    "What is something you have been curious about lately that we have not discussed?",
+    "Which project would you like me to understand more deeply?",
+    "What is a skill you hope to develop, and what makes it interesting to you?",
+    "What is one thing you wish I understood better about how you think?",
+    "What topic could you talk about for hours?"
+  ];
+  const aboutIan=[
+    "What quality do you think I should develop as I continue learning?",
+    "Which part of my memory system should I explain more clearly?",
+    "What should I ask myself before I decide that I have learned something?",
+    "How would you like me to tell the difference between a fact and an assumption?",
+    "What would make my conversations feel more thoughtful and less repetitive?"
+  ];
+  const contextual=facts.length?[
+    `You have told me that ${facts[Math.floor(Math.random()*facts.length)].fact.replace(/[.!?]+$/,'')}. What is the story behind that?`,
+    `I have been thinking about what you told me about ${facts[Math.floor(Math.random()*facts.length)].detail}. Has your perspective on it changed?`
+  ]:[];
+  const pool=[...aboutUser,...aboutIan,...contextual].filter(q=>!recent.includes(q));
+  if(!pool.length){save(STORAGE.askedQuestions,[]);return buildAutonomousQuestion()}
+  const question=pool[Math.floor(Math.random()*pool.length)];
+  save(STORAGE.askedQuestions,[...recent,question].slice(-100));
+  return question;
+}
+function scheduleAutonomousQuestion(){
+  const delay= (8+Math.random()*17)*60*1000; // random interval: 8–25 minutes
+  setTimeout(()=>{
+    if(document.visibilityState==="visible" && ianAwake){
+      const q=buildAutonomousQuestion();
+      pendingAutonomousQuestion={text:q,askedTo:currentOperator,askedAt:now()};
+      save(STORAGE.askedQuestions+':pending',pendingAutonomousQuestion);
+      renderResponse(`A question, if you have a moment: ${q}`);
+      if(voiceEnabled)speak(`A question, if you have a moment. ${q}`);
+    }
+    scheduleAutonomousQuestion();
+  },delay);
+}
+
 /* ------------------ Telemetry / rendering ------------------ */
 function renderEmotion(){
   $("emotionLine").textContent=`${ianMood.toUpperCase()} • ANGER ${Math.round(ianAngerLevel)}/10`;
@@ -1168,6 +1294,7 @@ function renderDefense(){
   document.body.classList.toggle("kill-mode",killMode);
   const omega=$("omegaMark");
   if(omega)omega.classList.toggle("active",killMode);
+  const orbZone=document.querySelector(".orb-zone");if(orbZone)orbZone.classList.toggle("defense-active",killMode);
   $("defenseSys").textContent=killMode?(killOnSight?"KOS SIM":"DEFENSE SIM"):"NORMAL";
   $("defenseSys").className=killMode?"online":"online";
 }
@@ -1233,6 +1360,8 @@ const COMMANDS=[
  ["I'm learning <topic> / I'm building <project>","Automatically save a learning or project fact."],
  ["what do i like","Show profile likes."],
  ["what do i dislike","Show profile dislikes."],
+ ["switch user to <name> / this is <name>","Select the active speaker profile so first-person facts are attributed correctly."],
+ ["autonomous questions","I.A.N. periodically initiates a random question about you or itself."],
 
  ["what is your mood / mood / emotion","Report current mood and anger level."],
  ["feel about life","Report I.A.N.'s life-interest state."],
@@ -1274,6 +1403,7 @@ window.addEventListener("load",()=>{
   const appearance=load(STORAGE.appearance,{mode:"dark",dark:true});
   setDisplayMode(appearance.mode||(appearance.dark===false?"light":"dark"));
   refreshFixedVoiceStatus();
+  scheduleAutonomousQuestion();
   $("commandInput").focus();
 });
 </script>
